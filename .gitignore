@@ -25,7 +25,7 @@ run_may2018.log
 
 # Node / frontend
 frontend/node_modules/
-frontend/dist/
+# frontend/dist/ — kept in repo for Render static site deploy
 
 # Environment files with secrets
 .env
