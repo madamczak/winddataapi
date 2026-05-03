@@ -1,0 +1,23 @@
+{
+  "data": [
+    "Date and time",
+    "Wind speed (m/s)",
+    "Density adjusted wind speed (m/s)",
+    "Power (kW)",
+    "Rotor speed (RPM)",
+    "Blade angle (pitch position) A (°)",
+    "Blade angle (pitch position) B (°)",
+    "Blade angle (pitch position) C (°)",
+    "Capacity factor"
+  ],
+  "status": [
+    "Timestamp start",
+    "Timestamp end",
+    "Duration",
+    "Status",
+    "Code",
+    "Message",
+    "IEC category"
+  ]
+}
+

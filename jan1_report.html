@@ -1,0 +1,2846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>January 1st – Wind Turbine Report</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #222; margin: 0; padding: 0; }
+  header { background: #1a2540; color: white; padding: 24px 40px; }
+  header h1 { margin: 0; font-size: 1.8em; }
+  header p { margin: 6px 0 0; opacity: 0.75; }
+  .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
+  .stats-bar { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+  .stat-box { background: white; border-radius: 8px; padding: 16px 28px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); flex: 1; min-width: 140px; }
+  .stat-box .val { font-size: 2em; font-weight: bold; color: #1a2540; }
+  .stat-box .lbl { font-size: 0.85em; color: #666; }
+  .chart-wrap { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 30px; }
+  .group { background: white; border-radius: 8px; padding: 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 20px; }
+  .group h3 { margin-top: 0; color: #1a2540; }
+  .badge { background: #e8edf5; color: #555; font-size: 0.75em; padding: 3px 10px; border-radius: 12px; font-weight: normal; margin-left: 10px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 12px; font-size: 0.93em; }
+  th { background: #1a2540; color: white; padding: 8px 12px; text-align: left; }
+  td { padding: 7px 12px; border-bottom: 1px solid #eee; }
+  tr:hover td { background: #f0f4ff; }
+  h2 { color: #1a2540; border-bottom: 2px solid #1a2540; padding-bottom: 6px; }
+  .toc { background: white; border-radius: 8px; padding: 16px 24px; box-shadow: 0 2px 6px rgba(0,0,0,0.08); margin-bottom: 30px; }
+  .toc a { display: inline-block; margin: 4px 6px; padding: 4px 12px; background: #e8edf5; border-radius: 14px; color: #1a2540; text-decoration: none; font-size: 0.9em; }
+  .toc a:hover { background: #1a2540; color: white; }
+</style>
+</head>
+<body>
+<header>
+  <h1>&#127751; January 1st – Wind Turbine Power Report</h1>
+  <p>kelmarsh / turbine_2 &mdash; All 24 hours of January 1st compared across years (2017–2023)</p>
+</header>
+<div class="container">
+
+  <div class="stats-bar">
+    <div class="stat-box"><div class="val">168</div><div class="lbl">Summary files loaded</div></div>
+    <div class="stat-box"><div class="val">1</div><div class="lbl">Wind farm(s)</div></div>
+    <div class="stat-box"><div class="val">7</div><div class="lbl">Years covered</div></div>
+    <div class="stat-box"><div class="val">2017–2023</div><div class="lbl">Year range</div></div>
+    <div class="stat-box"><div class="val">24</div><div class="lbl">Hour slots</div></div>
+  </div>
+
+  <h2>Power Trend Overview (kW/year slope per hour)</h2>
+  <div class="chart-wrap">
+    <canvas id="trendChart" height="90"></canvas>
+  </div>
+
+  <div class="toc">
+    <strong>Jump to hour:</strong>
+    <a href="#hour-00">00:00</a><a href="#hour-01">01:00</a><a href="#hour-02">02:00</a><a href="#hour-03">03:00</a><a href="#hour-04">04:00</a><a href="#hour-05">05:00</a><a href="#hour-06">06:00</a><a href="#hour-07">07:00</a><a href="#hour-08">08:00</a><a href="#hour-09">09:00</a><a href="#hour-10">10:00</a><a href="#hour-11">11:00</a><a href="#hour-12">12:00</a><a href="#hour-13">13:00</a><a href="#hour-14">14:00</a><a href="#hour-15">15:00</a><a href="#hour-16">16:00</a><a href="#hour-17">17:00</a><a href="#hour-18">18:00</a><a href="#hour-19">19:00</a><a href="#hour-20">20:00</a><a href="#hour-21">21:00</a><a href="#hour-22">22:00</a><a href="#hour-23">23:00</a>
+  </div>
+
+  <h2>All 24 Hours – Year-over-Year Comparison</h2>
+  
+        <div class="group" id="hour-00">
+            <h3>&#128336; 00:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7514</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+8.8 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 00:00:00</td>
+                <td>7.70 m/s</td>
+                <td>14.12 RPM</td>
+                <td>7.3 °C</td>
+                <td><strong>963.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 00:00:00</td>
+                <td>10.86 m/s</td>
+                <td>15.16 RPM</td>
+                <td>5.5 °C</td>
+                <td><strong>2004.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 00:00:00</td>
+                <td>5.60 m/s</td>
+                <td>10.56 RPM</td>
+                <td>8.6 °C</td>
+                <td><strong>381.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 00:00:00</td>
+                <td>4.48 m/s</td>
+                <td>9.30 RPM</td>
+                <td>6.5 °C</td>
+                <td><strong>233.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 00:00:00</td>
+                <td>5.88 m/s</td>
+                <td>0.00 RPM</td>
+                <td>0.0 °C</td>
+                <td><strong>-3.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 00:00:00</td>
+                <td>7.21 m/s</td>
+                <td>13.43 RPM</td>
+                <td>12.2 °C</td>
+                <td><strong>848.4 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 00:00:00</td>
+                <td>10.68 m/s</td>
+                <td>15.16 RPM</td>
+                <td>10.3 °C</td>
+                <td><strong>1943.8 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-00" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-00').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [963.0, 2004.7, 381.0, 233.7, -3.7, 848.4, 1943.8],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-01">
+            <h3>&#128336; 01:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.8028</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+9.2 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 01:00:00</td>
+                <td>7.96 m/s</td>
+                <td>14.26 RPM</td>
+                <td>7.0 °C</td>
+                <td><strong>1133.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 01:00:00</td>
+                <td>10.88 m/s</td>
+                <td>15.16 RPM</td>
+                <td>5.4 °C</td>
+                <td><strong>2016.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 01:00:00</td>
+                <td>5.06 m/s</td>
+                <td>9.55 RPM</td>
+                <td>8.5 °C</td>
+                <td><strong>272.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 01:00:00</td>
+                <td>4.06 m/s</td>
+                <td>8.83 RPM</td>
+                <td>6.5 °C</td>
+                <td><strong>183.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 01:00:00</td>
+                <td>5.96 m/s</td>
+                <td>0.00 RPM</td>
+                <td>0.0 °C</td>
+                <td><strong>-3.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 01:00:00</td>
+                <td>7.55 m/s</td>
+                <td>13.78 RPM</td>
+                <td>12.6 °C</td>
+                <td><strong>992.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 01:00:00</td>
+                <td>11.89 m/s</td>
+                <td>15.16 RPM</td>
+                <td>10.0 °C</td>
+                <td><strong>1994.0 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-01" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-01').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1133.9, 2016.8, 272.3, 183.8, -3.9, 992.8, 1994.0],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-02">
+            <h3>&#128336; 02:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7912</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+17.4 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 02:00:00</td>
+                <td>8.19 m/s</td>
+                <td>14.58 RPM</td>
+                <td>6.8 °C</td>
+                <td><strong>1147.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 02:00:00</td>
+                <td>10.86 m/s</td>
+                <td>15.15 RPM</td>
+                <td>5.3 °C</td>
+                <td><strong>2005.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 02:00:00</td>
+                <td>6.50 m/s</td>
+                <td>12.10 RPM</td>
+                <td>8.5 °C</td>
+                <td><strong>589.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 02:00:00</td>
+                <td>3.37 m/s</td>
+                <td>8.29 RPM</td>
+                <td>6.4 °C</td>
+                <td><strong>87.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 02:00:00</td>
+                <td>6.53 m/s</td>
+                <td>0.00 RPM</td>
+                <td>0.3 °C</td>
+                <td><strong>-3.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 02:00:00</td>
+                <td>8.40 m/s</td>
+                <td>14.79 RPM</td>
+                <td>12.9 °C</td>
+                <td><strong>1263.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 02:00:00</td>
+                <td>11.30 m/s</td>
+                <td>15.16 RPM</td>
+                <td>9.5 °C</td>
+                <td><strong>2001.9 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-02" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-02').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1147.6, 2005.5, 589.1, 87.7, -3.7, 1263.7, 2001.9],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-03">
+            <h3>&#128336; 03:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7887</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+21.1 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 03:00:00</td>
+                <td>7.59 m/s</td>
+                <td>13.82 RPM</td>
+                <td>6.7 °C</td>
+                <td><strong>942.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 03:00:00</td>
+                <td>11.17 m/s</td>
+                <td>15.16 RPM</td>
+                <td>5.3 °C</td>
+                <td><strong>2036.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 03:00:00</td>
+                <td>7.16 m/s</td>
+                <td>13.49 RPM</td>
+                <td>8.5 °C</td>
+                <td><strong>875.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 03:00:00</td>
+                <td>2.85 m/s</td>
+                <td>8.15 RPM</td>
+                <td>5.8 °C</td>
+                <td><strong>43.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 03:00:00</td>
+                <td>5.89 m/s</td>
+                <td>0.01 RPM</td>
+                <td>-0.0 °C</td>
+                <td><strong>-3.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 03:00:00</td>
+                <td>8.17 m/s</td>
+                <td>14.67 RPM</td>
+                <td>12.8 °C</td>
+                <td><strong>1188.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 03:00:00</td>
+                <td>10.99 m/s</td>
+                <td>15.15 RPM</td>
+                <td>9.2 °C</td>
+                <td><strong>1997.6 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-03" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-03').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [942.1, 2036.6, 875.2, 43.1, -3.9, 1188.9, 1997.6],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-04">
+            <h3>&#128336; 04:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7604</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+56.3 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 04:00:00</td>
+                <td>7.07 m/s</td>
+                <td>12.97 RPM</td>
+                <td>7.0 °C</td>
+                <td><strong>733.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 04:00:00</td>
+                <td>10.18 m/s</td>
+                <td>15.12 RPM</td>
+                <td>5.3 °C</td>
+                <td><strong>1819.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 04:00:00</td>
+                <td>8.74 m/s</td>
+                <td>14.76 RPM</td>
+                <td>8.1 °C</td>
+                <td><strong>1340.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 04:00:00</td>
+                <td>3.25 m/s</td>
+                <td>8.20 RPM</td>
+                <td>5.1 °C</td>
+                <td><strong>79.4 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 04:00:00</td>
+                <td>5.62 m/s</td>
+                <td>0.03 RPM</td>
+                <td>-0.5 °C</td>
+                <td><strong>-3.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 04:00:00</td>
+                <td>8.90 m/s</td>
+                <td>14.97 RPM</td>
+                <td>12.5 °C</td>
+                <td><strong>1530.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 04:00:00</td>
+                <td>10.28 m/s</td>
+                <td>15.16 RPM</td>
+                <td>9.0 °C</td>
+                <td><strong>1898.9 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-04" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-04').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [733.3, 1819.1, 1340.3, 79.4, -3.7, 1530.5, 1898.9],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-05">
+            <h3>&#128336; 05:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7044</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+31.3 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 05:00:00</td>
+                <td>7.16 m/s</td>
+                <td>13.14 RPM</td>
+                <td>7.0 °C</td>
+                <td><strong>763.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 05:00:00</td>
+                <td>10.20 m/s</td>
+                <td>15.15 RPM</td>
+                <td>5.4 °C</td>
+                <td><strong>1888.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 05:00:00</td>
+                <td>6.42 m/s</td>
+                <td>12.47 RPM</td>
+                <td>8.2 °C</td>
+                <td><strong>694.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 05:00:00</td>
+                <td>4.87 m/s</td>
+                <td>9.23 RPM</td>
+                <td>4.5 °C</td>
+                <td><strong>230.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 05:00:00</td>
+                <td>6.19 m/s</td>
+                <td>0.11 RPM</td>
+                <td>0.4 °C</td>
+                <td><strong>-3.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 05:00:00</td>
+                <td>8.31 m/s</td>
+                <td>14.61 RPM</td>
+                <td>12.5 °C</td>
+                <td><strong>1307.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 05:00:00</td>
+                <td>9.69 m/s</td>
+                <td>15.10 RPM</td>
+                <td>8.9 °C</td>
+                <td><strong>1675.8 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-05" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-05').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [763.6, 1888.8, 694.3, 230.0, -3.8, 1307.6, 1675.8],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-06">
+            <h3>&#128336; 06:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7328</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+33.5 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 06:00:00</td>
+                <td>7.69 m/s</td>
+                <td>14.00 RPM</td>
+                <td>6.8 °C</td>
+                <td><strong>934.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 06:00:00</td>
+                <td>10.15 m/s</td>
+                <td>15.14 RPM</td>
+                <td>5.0 °C</td>
+                <td><strong>1859.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 06:00:00</td>
+                <td>6.37 m/s</td>
+                <td>12.58 RPM</td>
+                <td>8.1 °C</td>
+                <td><strong>671.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 06:00:00</td>
+                <td>4.35 m/s</td>
+                <td>8.43 RPM</td>
+                <td>4.2 °C</td>
+                <td><strong>147.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 06:00:00</td>
+                <td>6.38 m/s</td>
+                <td>0.07 RPM</td>
+                <td>0.7 °C</td>
+                <td><strong>-3.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 06:00:00</td>
+                <td>9.20 m/s</td>
+                <td>15.11 RPM</td>
+                <td>12.5 °C</td>
+                <td><strong>1658.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 06:00:00</td>
+                <td>9.45 m/s</td>
+                <td>15.04 RPM</td>
+                <td>8.8 °C</td>
+                <td><strong>1606.9 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-06" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-06').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [934.9, 1859.5, 671.8, 147.3, -3.8, 1658.7, 1606.9],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-07">
+            <h3>&#128336; 07:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7538</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+90.5 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 07:00:00</td>
+                <td>7.07 m/s</td>
+                <td>13.00 RPM</td>
+                <td>6.9 °C</td>
+                <td><strong>746.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 07:00:00</td>
+                <td>10.08 m/s</td>
+                <td>15.14 RPM</td>
+                <td>4.2 °C</td>
+                <td><strong>1861.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 07:00:00</td>
+                <td>6.56 m/s</td>
+                <td>12.48 RPM</td>
+                <td>8.0 °C</td>
+                <td><strong>661.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 07:00:00</td>
+                <td>4.00 m/s</td>
+                <td>8.29 RPM</td>
+                <td>3.7 °C</td>
+                <td><strong>117.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 07:00:00</td>
+                <td>6.42 m/s</td>
+                <td>0.06 RPM</td>
+                <td>1.3 °C</td>
+                <td><strong>-3.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 07:00:00</td>
+                <td>9.23 m/s</td>
+                <td>15.14 RPM</td>
+                <td>12.5 °C</td>
+                <td><strong>1704.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 07:00:00</td>
+                <td>10.41 m/s</td>
+                <td>15.14 RPM</td>
+                <td>8.8 °C</td>
+                <td><strong>1917.4 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-07" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-07').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [746.8, 1861.6, 661.3, 117.7, -3.8, 1704.9, 1917.4],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-08">
+            <h3>&#128336; 08:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.8159</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+229.3 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 08:00:00</td>
+                <td>5.20 m/s</td>
+                <td>9.67 RPM</td>
+                <td>6.9 °C</td>
+                <td><strong>281.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 08:00:00</td>
+                <td>7.68 m/s</td>
+                <td>13.85 RPM</td>
+                <td>4.6 °C</td>
+                <td><strong>957.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 08:00:00</td>
+                <td>5.31 m/s</td>
+                <td>10.09 RPM</td>
+                <td>8.0 °C</td>
+                <td><strong>324.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 08:00:00</td>
+                <td>2.81 m/s</td>
+                <td>5.46 RPM</td>
+                <td>4.0 °C</td>
+                <td><strong>58.0 kW</strong></td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 08:00:00</td>
+                <td>6.01 m/s</td>
+                <td>0.02 RPM</td>
+                <td>1.6 °C</td>
+                <td><strong>-4.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 08:00:00</td>
+                <td>10.66 m/s</td>
+                <td>15.17 RPM</td>
+                <td>12.7 °C</td>
+                <td><strong>1995.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 08:00:00</td>
+                <td>10.03 m/s</td>
+                <td>15.16 RPM</td>
+                <td>8.9 °C</td>
+                <td><strong>1838.6 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-08" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-08').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [281.0, 957.0, 324.7, 58.0, -4.1, 1995.3, 1838.6],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-09">
+            <h3>&#128336; 09:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.9219</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+187.1 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 09:00:00</td>
+                <td>4.96 m/s</td>
+                <td>9.26 RPM</td>
+                <td>6.9 °C</td>
+                <td><strong>284.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 09:00:00</td>
+                <td>7.95 m/s</td>
+                <td>14.40 RPM</td>
+                <td>4.9 °C</td>
+                <td><strong>1042.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 09:00:00</td>
+                <td>5.93 m/s</td>
+                <td>11.09 RPM</td>
+                <td>8.3 °C</td>
+                <td><strong>453.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 09:00:00</td>
+                <td>1.73 m/s</td>
+                <td>0.28 RPM</td>
+                <td>4.5 °C</td>
+                <td><strong>-1.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 09:00:00</td>
+                <td>7.47 m/s</td>
+                <td>0.01 RPM</td>
+                <td>2.0 °C</td>
+                <td><strong>-3.6 kW</strong></td>
+                <td>1</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 09:00:00</td>
+                <td>9.90 m/s</td>
+                <td>15.17 RPM</td>
+                <td>12.9 °C</td>
+                <td><strong>1867.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 09:00:00</td>
+                <td>9.38 m/s</td>
+                <td>15.09 RPM</td>
+                <td>9.0 °C</td>
+                <td><strong>1633.1 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-09" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-09').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [284.5, 1042.3, 453.7, -1.3, -3.6, 1867.3, 1633.1],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-10">
+            <h3>&#128336; 10:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.8657</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+106.6 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 10:00:00</td>
+                <td>8.73 m/s</td>
+                <td>14.56 RPM</td>
+                <td>5.2 °C</td>
+                <td><strong>1410.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 10:00:00</td>
+                <td>7.66 m/s</td>
+                <td>13.92 RPM</td>
+                <td>5.4 °C</td>
+                <td><strong>925.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 10:00:00</td>
+                <td>5.80 m/s</td>
+                <td>10.67 RPM</td>
+                <td>8.2 °C</td>
+                <td><strong>390.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 10:00:00</td>
+                <td>2.55 m/s</td>
+                <td>3.08 RPM</td>
+                <td>4.5 °C</td>
+                <td><strong>-1.6 kW</strong></td>
+                <td>6</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 10:00:00</td>
+                <td>6.12 m/s</td>
+                <td>0.05 RPM</td>
+                <td>2.4 °C</td>
+                <td><strong>-3.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 10:00:00</td>
+                <td>10.14 m/s</td>
+                <td>15.15 RPM</td>
+                <td>13.4 °C</td>
+                <td><strong>1937.4 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 10:00:00</td>
+                <td>10.43 m/s</td>
+                <td>15.17 RPM</td>
+                <td>9.5 °C</td>
+                <td><strong>1862.4 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-10" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-10').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1410.7, 925.6, 390.3, -1.6, -3.8, 1937.4, 1862.4],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-11">
+            <h3>&#128336; 11:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.9600</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+70.4 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 11:00:00</td>
+                <td>10.64 m/s</td>
+                <td>15.17 RPM</td>
+                <td>3.8 °C</td>
+                <td><strong>1995.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 11:00:00</td>
+                <td>7.02 m/s</td>
+                <td>13.04 RPM</td>
+                <td>6.1 °C</td>
+                <td><strong>750.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 11:00:00</td>
+                <td>6.27 m/s</td>
+                <td>10.49 RPM</td>
+                <td>8.6 °C</td>
+                <td><strong>473.5 kW</strong></td>
+                <td>12</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 11:00:00</td>
+                <td>1.84 m/s</td>
+                <td>0.53 RPM</td>
+                <td>4.9 °C</td>
+                <td><strong>-1.4 kW</strong></td>
+                <td>2</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 11:00:00</td>
+                <td>5.88 m/s</td>
+                <td>0.00 RPM</td>
+                <td>2.9 °C</td>
+                <td><strong>-3.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 11:00:00</td>
+                <td>10.14 m/s</td>
+                <td>15.13 RPM</td>
+                <td>13.2 °C</td>
+                <td><strong>1946.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 11:00:00</td>
+                <td>11.26 m/s</td>
+                <td>15.17 RPM</td>
+                <td>10.3 °C</td>
+                <td><strong>2014.0 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-11" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-11').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1995.0, 750.8, 473.5, -1.4, -3.6, 1946.0, 2014.0],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-12">
+            <h3>&#128336; 12:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.9494</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+90.4 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 12:00:00</td>
+                <td>9.46 m/s</td>
+                <td>15.02 RPM</td>
+                <td>3.0 °C</td>
+                <td><strong>1731.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 12:00:00</td>
+                <td>7.22 m/s</td>
+                <td>13.28 RPM</td>
+                <td>5.5 °C</td>
+                <td><strong>825.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 12:00:00</td>
+                <td>6.75 m/s</td>
+                <td>12.55 RPM</td>
+                <td>9.3 °C</td>
+                <td><strong>664.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 12:00:00</td>
+                <td>2.37 m/s</td>
+                <td>0.86 RPM</td>
+                <td>5.1 °C</td>
+                <td><strong>-2.5 kW</strong></td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 12:00:00</td>
+                <td>5.92 m/s</td>
+                <td>0.00 RPM</td>
+                <td>3.2 °C</td>
+                <td><strong>-3.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 12:00:00</td>
+                <td>10.60 m/s</td>
+                <td>15.15 RPM</td>
+                <td>13.1 °C</td>
+                <td><strong>1962.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 12:00:00</td>
+                <td>12.05 m/s</td>
+                <td>15.17 RPM</td>
+                <td>10.9 °C</td>
+                <td><strong>2040.7 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-12" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-12').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1731.8, 825.9, 664.5, -2.5, -3.8, 1962.7, 2040.7],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-13">
+            <h3>&#128336; 13:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.8214</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+56.2 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 13:00:00</td>
+                <td>9.48 m/s</td>
+                <td>15.12 RPM</td>
+                <td>2.7 °C</td>
+                <td><strong>1719.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 13:00:00</td>
+                <td>6.19 m/s</td>
+                <td>11.55 RPM</td>
+                <td>5.4 °C</td>
+                <td><strong>521.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 13:00:00</td>
+                <td>7.34 m/s</td>
+                <td>13.48 RPM</td>
+                <td>10.2 °C</td>
+                <td><strong>864.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 13:00:00</td>
+                <td>2.68 m/s</td>
+                <td>6.20 RPM</td>
+                <td>5.6 °C</td>
+                <td><strong>8.4 kW</strong></td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 13:00:00</td>
+                <td>6.66 m/s</td>
+                <td>0.01 RPM</td>
+                <td>3.1 °C</td>
+                <td><strong>-3.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 13:00:00</td>
+                <td>9.83 m/s</td>
+                <td>15.15 RPM</td>
+                <td>13.2 °C</td>
+                <td><strong>1841.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 13:00:00</td>
+                <td>9.56 m/s</td>
+                <td>15.06 RPM</td>
+                <td>10.9 °C</td>
+                <td><strong>1652.7 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-13" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-13').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1719.0, 521.1, 864.9, 8.4, -3.6, 1841.0, 1652.7],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-14">
+            <h3>&#128336; 14:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7841</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#27ae60;font-weight:bold">&#9650; INCREASING (+45.5 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 14:00:00</td>
+                <td>8.76 m/s</td>
+                <td>14.46 RPM</td>
+                <td>3.3 °C</td>
+                <td><strong>1425.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 14:00:00</td>
+                <td>7.04 m/s</td>
+                <td>12.92 RPM</td>
+                <td>5.6 °C</td>
+                <td><strong>776.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 14:00:00</td>
+                <td>5.82 m/s</td>
+                <td>11.01 RPM</td>
+                <td>9.5 °C</td>
+                <td><strong>479.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 14:00:00</td>
+                <td>3.62 m/s</td>
+                <td>6.20 RPM</td>
+                <td>5.8 °C</td>
+                <td><strong>82.2 kW</strong></td>
+                <td>4</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 14:00:00</td>
+                <td>6.50 m/s</td>
+                <td>0.01 RPM</td>
+                <td>3.1 °C</td>
+                <td><strong>-3.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 14:00:00</td>
+                <td>10.11 m/s</td>
+                <td>15.13 RPM</td>
+                <td>13.4 °C</td>
+                <td><strong>1849.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 14:00:00</td>
+                <td>8.65 m/s</td>
+                <td>14.80 RPM</td>
+                <td>10.5 °C</td>
+                <td><strong>1295.0 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-14" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-14').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1425.2, 776.0, 479.0, 82.2, -3.6, 1849.1, 1295.0],
+                backgroundColor: '#27ae6088',
+                borderColor: '#27ae60',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-15">
+            <h3>&#128336; 15:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.7683</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-16.8 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 15:00:00</td>
+                <td>8.50 m/s</td>
+                <td>14.96 RPM</td>
+                <td>3.5 °C</td>
+                <td><strong>1364.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 15:00:00</td>
+                <td>8.38 m/s</td>
+                <td>14.70 RPM</td>
+                <td>5.4 °C</td>
+                <td><strong>1184.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 15:00:00</td>
+                <td>4.52 m/s</td>
+                <td>8.77 RPM</td>
+                <td>8.9 °C</td>
+                <td><strong>185.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 15:00:00</td>
+                <td>4.00 m/s</td>
+                <td>8.29 RPM</td>
+                <td>6.0 °C</td>
+                <td><strong>119.4 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 15:00:00</td>
+                <td>6.48 m/s</td>
+                <td>0.02 RPM</td>
+                <td>3.2 °C</td>
+                <td><strong>-3.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 15:00:00</td>
+                <td>9.77 m/s</td>
+                <td>15.14 RPM</td>
+                <td>13.3 °C</td>
+                <td><strong>1886.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 15:00:00</td>
+                <td>7.28 m/s</td>
+                <td>13.29 RPM</td>
+                <td>10.4 °C</td>
+                <td><strong>803.2 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-15" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-15').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1364.8, 1184.6, 185.0, 119.4, -3.7, 1886.1, 803.2],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-16">
+            <h3>&#128336; 16:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.6979</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-32.8 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 16:00:00</td>
+                <td>7.23 m/s</td>
+                <td>13.21 RPM</td>
+                <td>3.8 °C</td>
+                <td><strong>817.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 16:00:00</td>
+                <td>9.53 m/s</td>
+                <td>15.15 RPM</td>
+                <td>5.8 °C</td>
+                <td><strong>1732.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 16:00:00</td>
+                <td>4.98 m/s</td>
+                <td>9.54 RPM</td>
+                <td>8.3 °C</td>
+                <td><strong>262.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 16:00:00</td>
+                <td>4.86 m/s</td>
+                <td>9.23 RPM</td>
+                <td>5.8 °C</td>
+                <td><strong>236.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 16:00:00</td>
+                <td>7.12 m/s</td>
+                <td>0.52 RPM</td>
+                <td>3.6 °C</td>
+                <td><strong>14.0 kW</strong></td>
+                <td>7</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 16:00:00</td>
+                <td>8.73 m/s</td>
+                <td>14.96 RPM</td>
+                <td>13.2 °C</td>
+                <td><strong>1434.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 16:00:00</td>
+                <td>7.05 m/s</td>
+                <td>13.07 RPM</td>
+                <td>10.1 °C</td>
+                <td><strong>793.1 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-16" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-16').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [817.2, 1732.8, 262.7, 236.6, 14.0, 1434.3, 793.1],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-17">
+            <h3>&#128336; 17:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.4773</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-31.5 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 17:00:00</td>
+                <td>8.12 m/s</td>
+                <td>14.50 RPM</td>
+                <td>3.8 °C</td>
+                <td><strong>1225.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 17:00:00</td>
+                <td>10.35 m/s</td>
+                <td>15.15 RPM</td>
+                <td>6.4 °C</td>
+                <td><strong>1843.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 17:00:00</td>
+                <td>5.39 m/s</td>
+                <td>10.26 RPM</td>
+                <td>7.6 °C</td>
+                <td><strong>335.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 17:00:00</td>
+                <td>4.58 m/s</td>
+                <td>8.47 RPM</td>
+                <td>5.8 °C</td>
+                <td><strong>160.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 17:00:00</td>
+                <td>7.20 m/s</td>
+                <td>12.61 RPM</td>
+                <td>3.7 °C</td>
+                <td><strong>738.3 kW</strong></td>
+                <td>3</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 17:00:00</td>
+                <td>9.32 m/s</td>
+                <td>15.07 RPM</td>
+                <td>13.0 °C</td>
+                <td><strong>1716.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 17:00:00</td>
+                <td>7.44 m/s</td>
+                <td>13.40 RPM</td>
+                <td>9.4 °C</td>
+                <td><strong>881.7 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-17" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-17').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1225.7, 1843.0, 335.0, 160.5, 738.3, 1716.6, 881.7],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-18">
+            <h3>&#128336; 18:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.5054</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-87.6 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 18:00:00</td>
+                <td>9.45 m/s</td>
+                <td>15.12 RPM</td>
+                <td>3.3 °C</td>
+                <td><strong>1732.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 18:00:00</td>
+                <td>12.30 m/s</td>
+                <td>15.17 RPM</td>
+                <td>6.5 °C</td>
+                <td><strong>2036.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 18:00:00</td>
+                <td>6.32 m/s</td>
+                <td>11.77 RPM</td>
+                <td>6.6 °C</td>
+                <td><strong>545.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 18:00:00</td>
+                <td>4.65 m/s</td>
+                <td>8.72 RPM</td>
+                <td>5.7 °C</td>
+                <td><strong>183.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 18:00:00</td>
+                <td>6.73 m/s</td>
+                <td>12.45 RPM</td>
+                <td>3.4 °C</td>
+                <td><strong>659.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 18:00:00</td>
+                <td>10.19 m/s</td>
+                <td>15.15 RPM</td>
+                <td>12.7 °C</td>
+                <td><strong>1927.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 18:00:00</td>
+                <td>7.35 m/s</td>
+                <td>13.49 RPM</td>
+                <td>7.9 °C</td>
+                <td><strong>949.0 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-18" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-18').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1732.1, 2036.9, 545.2, 183.6, 659.5, 1927.7, 949.0],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-19">
+            <h3>&#128336; 19:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.4361</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-152.7 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 19:00:00</td>
+                <td>9.25 m/s</td>
+                <td>15.15 RPM</td>
+                <td>2.8 °C</td>
+                <td><strong>1739.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 19:00:00</td>
+                <td>12.21 m/s</td>
+                <td>15.15 RPM</td>
+                <td>6.3 °C</td>
+                <td><strong>2024.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 19:00:00</td>
+                <td>6.32 m/s</td>
+                <td>12.15 RPM</td>
+                <td>5.7 °C</td>
+                <td><strong>597.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 19:00:00</td>
+                <td>5.63 m/s</td>
+                <td>10.55 RPM</td>
+                <td>5.6 °C</td>
+                <td><strong>377.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 19:00:00</td>
+                <td>7.08 m/s</td>
+                <td>13.27 RPM</td>
+                <td>3.7 °C</td>
+                <td><strong>816.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 19:00:00</td>
+                <td>9.00 m/s</td>
+                <td>14.97 RPM</td>
+                <td>12.4 °C</td>
+                <td><strong>1527.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 19:00:00</td>
+                <td>6.46 m/s</td>
+                <td>11.79 RPM</td>
+                <td>7.7 °C</td>
+                <td><strong>572.6 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-19" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-19').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1739.5, 2024.3, 597.0, 377.8, 816.7, 1527.0, 572.6],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-20">
+            <h3>&#128336; 20:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.4978</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-112.1 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 20:00:00</td>
+                <td>8.69 m/s</td>
+                <td>15.03 RPM</td>
+                <td>2.5 °C</td>
+                <td><strong>1496.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 20:00:00</td>
+                <td>12.11 m/s</td>
+                <td>15.13 RPM</td>
+                <td>6.5 °C</td>
+                <td><strong>2023.5 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 20:00:00</td>
+                <td>5.12 m/s</td>
+                <td>9.76 RPM</td>
+                <td>5.3 °C</td>
+                <td><strong>291.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 20:00:00</td>
+                <td>4.89 m/s</td>
+                <td>9.26 RPM</td>
+                <td>5.9 °C</td>
+                <td><strong>237.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 20:00:00</td>
+                <td>6.98 m/s</td>
+                <td>13.08 RPM</td>
+                <td>3.8 °C</td>
+                <td><strong>772.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 20:00:00</td>
+                <td>8.54 m/s</td>
+                <td>14.85 RPM</td>
+                <td>12.2 °C</td>
+                <td><strong>1399.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 20:00:00</td>
+                <td>6.98 m/s</td>
+                <td>12.59 RPM</td>
+                <td>7.5 °C</td>
+                <td><strong>706.0 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-20" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-20').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1496.9, 2023.5, 291.6, 237.2, 772.3, 1399.7, 706.0],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-21">
+            <h3>&#128336; 21:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.4091</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-82.7 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 21:00:00</td>
+                <td>6.69 m/s</td>
+                <td>12.44 RPM</td>
+                <td>2.4 °C</td>
+                <td><strong>658.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 21:00:00</td>
+                <td>11.95 m/s</td>
+                <td>15.16 RPM</td>
+                <td>6.2 °C</td>
+                <td><strong>2009.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 21:00:00</td>
+                <td>6.60 m/s</td>
+                <td>11.99 RPM</td>
+                <td>4.8 °C</td>
+                <td><strong>579.7 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 21:00:00</td>
+                <td>4.76 m/s</td>
+                <td>9.15 RPM</td>
+                <td>6.0 °C</td>
+                <td><strong>226.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 21:00:00</td>
+                <td>6.55 m/s</td>
+                <td>12.25 RPM</td>
+                <td>3.7 °C</td>
+                <td><strong>618.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 21:00:00</td>
+                <td>7.20 m/s</td>
+                <td>13.78 RPM</td>
+                <td>12.2 °C</td>
+                <td><strong>899.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 21:00:00</td>
+                <td>6.71 m/s</td>
+                <td>12.28 RPM</td>
+                <td>7.2 °C</td>
+                <td><strong>614.2 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-21" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-21').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [658.8, 2009.9, 579.7, 226.0, 618.3, 899.6, 614.2],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-22">
+            <h3>&#128336; 22:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.3755</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-82.6 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 22:00:00</td>
+                <td>6.84 m/s</td>
+                <td>12.58 RPM</td>
+                <td>2.1 °C</td>
+                <td><strong>683.8 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 22:00:00</td>
+                <td>9.72 m/s</td>
+                <td>15.06 RPM</td>
+                <td>5.6 °C</td>
+                <td><strong>1713.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 22:00:00</td>
+                <td>7.74 m/s</td>
+                <td>13.75 RPM</td>
+                <td>4.4 °C</td>
+                <td><strong>887.2 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 22:00:00</td>
+                <td>5.32 m/s</td>
+                <td>10.01 RPM</td>
+                <td>6.2 °C</td>
+                <td><strong>317.9 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 22:00:00</td>
+                <td>6.15 m/s</td>
+                <td>11.34 RPM</td>
+                <td>3.7 °C</td>
+                <td><strong>485.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 22:00:00</td>
+                <td>7.75 m/s</td>
+                <td>14.33 RPM</td>
+                <td>12.1 °C</td>
+                <td><strong>1105.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 22:00:00</td>
+                <td>5.92 m/s</td>
+                <td>11.19 RPM</td>
+                <td>7.1 °C</td>
+                <td><strong>451.8 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-22" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-22').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [683.8, 1713.0, 887.2, 317.9, 485.6, 1105.1, 451.8],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+        <div class="group" id="hour-23">
+            <h3>&#128336; 23:00 &mdash; kelmarsh / turbine_2
+                <span class="badge">avg similarity: 0.3549</span>
+            </h3>
+            <p>Years with data: 2017, 2018, 2019, 2020, 2021, 2022, 2023 &nbsp;|&nbsp;
+               Pairs: 21</p>
+            <p>Power trend: <span style="color:#c0392b;font-weight:bold">&#9660; DECREASING (-136.3 kW/yr)</span></p>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div style="flex:2;min-width:300px;">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Year</th><th>Hour Start</th><th>Wind Speed</th>
+                      <th>Rotor Speed</th><th>Nacelle Temp</th><th>Power (kW)</th><th>Statuses</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+            <tr>
+                <td>2017</td>
+                <td>2017-01-01 23:00:00</td>
+                <td>8.15 m/s</td>
+                <td>14.73 RPM</td>
+                <td>1.7 °C</td>
+                <td><strong>1262.1 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2018</td>
+                <td>2018-01-01 23:00:00</td>
+                <td>9.83 m/s</td>
+                <td>15.11 RPM</td>
+                <td>6.0 °C</td>
+                <td><strong>1759.6 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2019</td>
+                <td>2019-01-01 23:00:00</td>
+                <td>7.44 m/s</td>
+                <td>13.75 RPM</td>
+                <td>4.2 °C</td>
+                <td><strong>894.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2020</td>
+                <td>2020-01-01 23:00:00</td>
+                <td>6.39 m/s</td>
+                <td>12.01 RPM</td>
+                <td>6.2 °C</td>
+                <td><strong>587.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2021</td>
+                <td>2021-01-01 23:00:00</td>
+                <td>6.54 m/s</td>
+                <td>12.33 RPM</td>
+                <td>3.4 °C</td>
+                <td><strong>633.0 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2022</td>
+                <td>2022-01-01 23:00:00</td>
+                <td>8.14 m/s</td>
+                <td>14.83 RPM</td>
+                <td>12.0 °C</td>
+                <td><strong>1245.3 kW</strong></td>
+                <td>0</td>
+            </tr>
+            <tr>
+                <td>2023</td>
+                <td>2023-01-01 23:00:00</td>
+                <td>5.78 m/s</td>
+                <td>10.95 RPM</td>
+                <td>6.8 °C</td>
+                <td><strong>420.1 kW</strong></td>
+                <td>0</td>
+            </tr></tbody>
+                </table>
+              </div>
+              <div style="flex:1;min-width:240px;max-width:360px;">
+                <canvas id="pwchart-23" height="160"></canvas>
+              </div>
+            </div>
+        </div>
+        <script>
+        (function(){
+          var ctx = document.getElementById('pwchart-23').getContext('2d');
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ["2017", "2018", "2019", "2020", "2021", "2022", "2023"],
+              datasets: [{
+                label: 'Power (kW)',
+                data: [1262.1, 1759.6, 894.0, 587.0, 633.0, 1245.3, 420.1],
+                backgroundColor: '#c0392b88',
+                borderColor: '#c0392b',
+                borderWidth: 1,
+                borderRadius: 3,
+              }]
+            },
+            options: {
+              plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(1) + ' kW' } }
+              },
+              scales: {
+                y: { title: { display: true, text: 'kW' }, beginAtZero: false }
+              }
+            }
+          });
+        })();
+        </script>
+
+</div>
+<script>
+const ctx = document.getElementById('trendChart').getContext('2d');
+new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ["00:00", "01:00", "02:00", "03:00", "04:00", "05:00", "06:00", "07:00", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00", "23:00"],
+    datasets: [{
+      label: 'Power slope (kW/year)',
+      data: [8.75, 9.15, 17.37, 21.15, 56.27, 31.29, 33.53, 90.47, 229.31, 187.09, 106.59, 70.37, 90.43, 56.16, 45.46, -16.8, -32.78, -31.48, -87.61, -152.7, -112.12, -82.71, -82.63, -136.27],
+      backgroundColor: ["#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#27ae60", "#c0392b", "#c0392b", "#c0392b", "#c0392b", "#c0392b", "#c0392b", "#c0392b", "#c0392b", "#c0392b"],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ctx.parsed.y.toFixed(2) + ' kW/yr' } }
+    },
+    scales: {
+      x: { title: { display: true, text: 'Hour of day' } },
+      y: { title: { display: true, text: 'kW per year (negative = decreasing)' } }
+    }
+  }
+});
+</script>
+</body>
+</html>

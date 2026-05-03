@@ -1,0 +1,27 @@
+{
+  "data": [
+    "Date and time",
+    "Nacelle ambient temperature (°C)",
+    "Nacelle temperature (°C)",
+    "Gear oil temperature (°C)",
+    "Gear oil inlet temperature (°C)",
+    "Generator bearing front temperature (°C)",
+    "Generator bearing rear temperature (°C)",
+    "Front bearing temperature (°C)",
+    "Rear bearing temperature (°C)",
+    "Rotor bearing temp (°C)",
+    "Stator temperature 1 (°C)",
+    "Transformer temperature (°C)",
+    "Hub temperature (°C)"
+  ],
+  "status": [
+    "Timestamp start",
+    "Timestamp end",
+    "Duration",
+    "Status",
+    "Code",
+    "Message",
+    "IEC category"
+  ]
+}
+

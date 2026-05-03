@@ -1,0 +1,7 @@
+Loaded 356 rows, columns: ['Keyword', 'URL', 'Ranking', 'Cannibalisation Severity', 'Action']
+Saved updated file to C:\Users\adamc\PycharmProjects\winddataAPI\excelfile\specialist_blinds_FINAL_v2.xlsx
+
+Summary:
+  OPTIMIZE      : 124
+  DEOPTIMIZE    : 167
+  NEW CONTENT   : 65

@@ -1,0 +1,17 @@
+{
+  "kelmarsh": {
+    "lat": 52.3838,
+    "lon": -1.0866,
+    "turbines": ["turbine_1", "turbine_2", "turbine_3", "turbine_4", "turbine_5", "turbine_6"]
+  },
+  "penmanshiel": {
+    "lat": 55.9130,
+    "lon": -2.2730,
+    "turbines": [
+      "turbine_1", "turbine_2", "turbine_3", "turbine_4", "turbine_5",
+      "turbine_6", "turbine_7", "turbine_8", "turbine_9", "turbine_10",
+      "turbine_11", "turbine_12", "turbine_13", "turbine_14", "turbine_15"
+    ]
+  }
+}
+

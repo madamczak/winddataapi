@@ -1,0 +1,42 @@
+# SQLite databases — large files, not for version control
+data_by_turbine/
+
+# Crawler collected output data (thousands of JSON files)
+crawler/output/
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Logs
+*.log
+api.log
+run.log
+run_err.log
+run_may2018.log
+
+# Node / frontend
+frontend/node_modules/
+frontend/dist/
+
+# Environment files with secrets
+.env
+.env.production
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# JetBrains
+.idea/
+*.iml
+
