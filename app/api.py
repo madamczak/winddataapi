@@ -1,7 +1,12 @@
-from fastapi import FastAPI, HTTPException, Query
+import time
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import Response
 from typing import Literal, Optional, List
 from . import db
+from .telemetry import get_logger, request_counter, error_counter, request_duration
+
+log = get_logger("winddataAPI.api")
 
 app = FastAPI(title='Wind Turbine Data API')
 
@@ -11,6 +16,23 @@ app.add_middleware(
     allow_methods=['*'],
     allow_headers=['*'],
 )
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response: Response = await call_next(request)
+    duration = time.perf_counter() - start
+    labels = {
+        "method":   request.method,
+        "endpoint": request.url.path,
+        "status":   str(response.status_code),
+    }
+    request_counter.add(1, labels)
+    request_duration.record(duration, labels)
+    if response.status_code >= 400:
+        error_counter.add(1, labels)
+    return response
 
 
 @app.get('/health')
@@ -69,17 +91,35 @@ def get_day_data(
     hour_to:   Optional[int] = Query(None, ge=0, le=23),
 ):
     """Fetch rows for a farm/turbine/date with optional column + hour filters."""
-    # Default to first available turbine when none specified
+    from .telemetry import rows_returned
     if not turbine:
         turbines = db.get_farm_turbines(farm)
         if not turbines:
             raise HTTPException(404, f"No turbines found for farm '{farm}'")
         turbine = turbines[0]
     try:
-        return db.query_day_rows(farm, file_type, turbine, date, columns or [], hour_from, hour_to)
+        t0     = time.perf_counter()
+        result = db.query_day_rows(farm, file_type, turbine, date, columns or [], hour_from, hour_to)
+        dur_ms = round((time.perf_counter() - t0) * 1000)
+        count  = len(result.get("rows", []))
+        labels = {"farm": farm, "turbine": turbine, "file_type": file_type}
+        rows_returned.record(count, labels)
+        log.info(
+            f"query farm={farm} turbine={turbine} date={date} "
+            f"hours={hour_from}-{hour_to} type={file_type} "
+            f"rows={count} duration_ms={dur_ms}",
+            extra={
+                "loki_farm": farm,
+                "loki_turbine": turbine,
+                "loki_file_type": file_type,
+            },
+        )
+        return result
     except FileNotFoundError as exc:
+        log.warning(f"Not found: farm={farm} turbine={turbine} date={date} — {exc}")
         raise HTTPException(404, str(exc))
     except Exception as exc:
+        log.error(f"Error: farm={farm} turbine={turbine} date={date} — {exc}")
         raise HTTPException(500, str(exc))
 
 
@@ -105,7 +145,21 @@ def farm_turbine_query(
     """
     site = f'{farm}_{data_type}_by_turbine'
     try:
+        from .telemetry import rows_returned
+        t0   = time.perf_counter()
         rows = db.query_rows(site, turbine, start=start, end=end, limit=limit)
+        dur_ms = round((time.perf_counter() - t0) * 1000)
+        labels = {"farm": farm, "turbine": turbine, "data_type": data_type}
+        rows_returned.record(len(rows), labels)
+        log.info(
+            f"query farm={farm} turbine={turbine} type={data_type} "
+            f"start={start} end={end} rows={len(rows)} duration_ms={dur_ms}",
+            extra={
+                "loki_farm": farm,
+                "loki_turbine": turbine,
+                "loki_data_type": data_type,
+            },
+        )
         return {
             'farm': farm,
             'data_type': data_type,
@@ -117,9 +171,11 @@ def farm_turbine_query(
         }
     except FileNotFoundError:
         available = [s for s in db.discover_sites() if s.startswith(farm)]
+        log.warning(f"Site not found: {site} — available: {available}")
         raise HTTPException(
             status_code=404,
             detail=f"Site '{site}' not found. Available sites matching farm '{farm}': {available}",
         )
     except Exception as e:
+        log.error(f"Error querying {site}/{turbine}: {e}")
         raise HTTPException(status_code=500, detail=str(e))
