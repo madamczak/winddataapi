@@ -25,8 +25,11 @@ if [ -z "$PI_NUM" ]; then
     elif [[ "$HOSTNAME_LOWER" == *pi3* ]] || [[ "$HOSTNAME_LOWER" == *pi-3* ]]; then PI_NUM=3
     else
         echo "Could not auto-detect Pi number from hostname '$(hostname)'."
-        echo "Pass it explicitly:  bash runners/install.sh 1"
-        exit 1
+        echo ""
+        read -rp "Which Pi is this? Enter 1, 2, or 3: " PI_NUM
+        if [[ ! "$PI_NUM" =~ ^[123]$ ]]; then
+            echo "Invalid input '$PI_NUM' — must be 1, 2, or 3."; exit 1
+        fi
     fi
 fi
 
