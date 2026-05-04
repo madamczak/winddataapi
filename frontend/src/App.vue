@@ -6,6 +6,7 @@
       <div class="main-tab-bar">
         <button class="main-tab-btn" :class="{ active: mainTab === 'query' }" @click="mainTab = 'query'">🔍 Query for Data</button>
         <button class="main-tab-btn" :class="{ active: mainTab === 'events' }" @click="mainTab = 'events'">📅 Query for Events</button>
+        <button class="main-tab-btn" :class="{ active: mainTab === 'custom' }" @click="mainTab = 'custom'">⭐ Custom Queries</button>
       </div>
     </header>
 
@@ -252,6 +253,138 @@
         </section>
       </template>
 
+
+      <!-- ══ PAGE: Custom Queries ══ -->
+      <template v-if="mainTab === 'custom'">
+
+        <div v-if="cqLoadError" class="card cq-load-error">
+          ⚠️ Could not load <code>custom_queries.json</code>: {{ cqLoadError }}<br/>
+          <small>Make sure the file exists at <code>frontend/public/custom_queries.json</code> and is valid JSON.</small>
+        </div>
+
+        <div v-else-if="customQueries.length === 0" class="card cq-load-error">
+          No queries defined yet. Edit <code>frontend/public/custom_queries.json</code> to add some.
+        </div>
+
+        <div v-else class="cq-grid">
+          <div
+            v-for="q in customQueries"
+            :key="q.id"
+            class="cq-card"
+            :class="{ 'cq-card--active': cqActiveId === q.id }"
+          >
+            <!-- Card header -->
+            <div class="cq-card-header">
+              <span :class="['cq-type-badge', q.type === 'data' ? 'cq-badge-data' : 'cq-badge-events']">
+                {{ q.type === 'data' ? '📊 Data' : '📅 Events' }}
+              </span>
+              <span class="cq-farm-tag">{{ q.farm }} / {{ q.turbine }}</span>
+            </div>
+
+            <!-- Card body -->
+            <div class="cq-card-body">
+              <h3 class="cq-title">{{ q.name }}</h3>
+              <p class="cq-desc">{{ q.description }}</p>
+
+              <!-- Query detail chips -->
+              <div class="cq-chips">
+                <template v-if="q.type === 'data'">
+                  <span class="chip">📅 {{ q.date }}</span>
+                  <span v-if="q.file_type" class="chip">{{ q.file_type }}</span>
+                  <span v-if="q.hour_from != null || q.hour_to != null" class="chip">
+                    ⏰ {{ q.hour_from ?? 0 }}h – {{ q.hour_to ?? 23 }}h
+                  </span>
+                  <span v-if="q.columns && q.columns.length" class="chip">{{ q.columns.length }} columns</span>
+                  <span v-else class="chip">all columns</span>
+                </template>
+                <template v-else>
+                  <span v-if="q.iec_category" class="chip">{{ q.iec_category }}</span>
+                  <span v-if="q.status" class="chip">Status: {{ q.status }}</span>
+                  <span class="chip">limit {{ q.limit ?? 500 }}</span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Run button -->
+            <div class="cq-card-footer">
+              <button
+                class="btn-primary cq-run-btn"
+                :disabled="cqLoadingId === q.id"
+                @click="runCustomQuery(q)"
+              >
+                <span v-if="cqLoadingId === q.id">⏳ Running…</span>
+                <span v-else>▶ Run Query</span>
+              </button>
+              <span v-if="cqErrors[q.id]" class="error-msg">{{ cqErrors[q.id] }}</span>
+            </div>
+
+            <!-- Inline results -->
+            <div v-if="cqActiveId === q.id && cqResults[q.id]" class="cq-results">
+              <template v-if="q.type === 'data'">
+                <div class="cq-results-header">
+                  <span class="row-count">{{ cqResults[q.id].row_count ?? cqResults[q.id].rows?.length ?? 0 }} rows</span>
+                  <div class="download-group">
+                    <select v-model="cqDownloadFmt[q.id]" class="download-format-select">
+                      <option value="csv">CSV</option><option value="json">JSON</option>
+                    </select>
+                    <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th v-for="col in cqResults[q.id].columns" :key="col">{{ col }}</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(row, i) in cqResults[q.id].rows.slice(0, 200)" :key="i">
+                        <td v-for="(cell, j) in row" :key="j">{{ cell ?? '—' }}</td>
+                      </tr>
+                      <tr v-if="cqResults[q.id].rows.length > 200">
+                        <td :colspan="cqResults[q.id].columns.length" class="no-rows">
+                          … {{ cqResults[q.id].rows.length - 200 }} more rows (download to see all)
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+
+              <template v-else>
+                <div class="cq-results-header">
+                  <span class="row-count">{{ cqResults[q.id].count }} events</span>
+                  <div class="download-group">
+                    <select v-model="cqDownloadFmt[q.id]" class="download-format-select">
+                      <option value="csv">CSV</option><option value="json">JSON</option>
+                    </select>
+                    <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
+                  </div>
+                </div>
+                <div class="table-scroll">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ col }}</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-for="(ev, i) in cqResults[q.id].events" :key="i">
+                        <td v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ ev[col] ?? '—' }}</td>
+                        <td>
+                          <a class="ev-link" href="#" @click.prevent="goToDataFromCq(ev, q)">→ View Data</a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </template>
+
     </main>
   </div>
 </template>
@@ -495,12 +628,116 @@ async function goToDataForEvent(ev) {
   await fetchData()
 }
 
+// ── Custom Queries tab state ───────────────────────────────────────────────
+const customQueries  = ref([])
+const cqLoadError    = ref('')
+const cqLoadingId    = ref(null)   // id of the query currently running
+const cqActiveId     = ref(null)   // id of the query whose results are shown
+const cqResults      = ref({})     // id → API response
+const cqErrors       = ref({})     // id → error string
+const cqDownloadFmt  = ref({})     // id → 'csv' | 'json'
+
+async function loadCustomQueries() {
+  try {
+    const res = await fetch('/custom_queries.json')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    const data = await res.json()
+    customQueries.value = data
+    // seed download format defaults
+    for (const q of data) cqDownloadFmt.value[q.id] = 'csv'
+  } catch (e) {
+    cqLoadError.value = e.message
+  }
+}
+
+async function runCustomQuery(q) {
+  cqLoadingId.value = q.id
+  cqErrors.value[q.id] = ''
+  try {
+    let result
+    if (q.type === 'data') {
+      result = await fetchDayData(
+        q.farm, q.date, q.file_type ?? 'data', q.turbine,
+        q.columns ?? [], q.hour_from ?? null, q.hour_to ?? null
+      )
+    } else {
+      result = await fetchEvents(
+        q.farm, q.turbine,
+        q.iec_category ?? null,
+        q.status ?? null,
+        q.limit ?? 500
+      )
+    }
+    cqResults.value[q.id] = result
+    cqActiveId.value = q.id
+  } catch (e) {
+    cqErrors.value[q.id] = e.message
+  } finally {
+    cqLoadingId.value = null
+  }
+}
+
+function cqEvDisplayCols(id) {
+  const r = cqResults.value[id]
+  if (!r) return []
+  const preferred = ['Timestamp start', 'Timestamp end', 'Duration', 'IEC category', 'Status', 'Code', 'Message']
+  return preferred.filter(c => (r.columns ?? []).includes(c))
+}
+
+function downloadCqResult(q) {
+  const r = cqResults.value[q.id]
+  if (!r) return
+  const fmt = cqDownloadFmt.value[q.id] ?? 'csv'
+  const baseName = q.id
+  let content, mimeType, fileName
+
+  if (q.type === 'data') {
+    const { columns, rows } = r
+    if (fmt === 'json') {
+      const objects = rows.map(row => Object.fromEntries(columns.map((c, i) => [c, row[i] ?? null])))
+      content = JSON.stringify(objects, null, 2); mimeType = 'application/json;charset=utf-8;'; fileName = `${baseName}.json`
+    } else {
+      const esc = v => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s }
+      content = `${columns.map(esc).join(',')}\n${rows.map(row => row.map(esc).join(',')).join('\n')}`
+      mimeType = 'text/csv;charset=utf-8;'; fileName = `${baseName}.csv`
+    }
+  } else {
+    const { columns, events } = r
+    if (fmt === 'json') {
+      content = JSON.stringify(events, null, 2); mimeType = 'application/json;charset=utf-8;'; fileName = `${baseName}.json`
+    } else {
+      const esc = v => { const s = String(v ?? ''); return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s }
+      content = `${columns.map(esc).join(',')}\n${events.map(ev => columns.map(c => esc(ev[c])).join(',')).join('\n')}`
+      mimeType = 'text/csv;charset=utf-8;'; fileName = `${baseName}.csv`
+    }
+  }
+  const blob = new Blob([content], { type: mimeType }), url = URL.createObjectURL(blob), a = document.createElement('a')
+  a.href = url; a.download = fileName; a.click(); URL.revokeObjectURL(url)
+}
+
+async function goToDataFromCq(ev, q) {
+  const tsStart = ev['Timestamp start']
+  const tsEnd   = ev['Timestamp end']
+  if (!tsStart) return
+  selectedFarm.value = q.farm; onFarmChange()
+  selectedTurbine.value  = q.turbine
+  selectedFileType.value = 'data'
+  selectedDate.value     = tsStart.slice(0, 10)
+  hourFrom.value         = parseInt(tsStart.slice(11, 13), 10)
+  hourTo.value           = tsEnd ? Math.min(23, parseInt(tsEnd.slice(11, 13), 10)) : hourFrom.value
+  allColumns.value       = true; selectedColumns.value = []
+  mainTab.value = 'query'
+  await new Promise(r => setTimeout(r, 50))
+  await fetchData()
+}
+
 // ── Initialisation ─────────────────────────────────────────────────────────
 onMounted(async () => {
   try {
     const [farmsData, colsData, rangesData] = await Promise.all([fetchWindFarms(), fetchColumns(), fetchTimeRanges()])
     farms.value = farmsData; columnsMap.value = colsData; timeRanges.value = rangesData
   } catch (e) { error.value = `Could not load farm metadata: ${e.message}` }
+  await loadCustomQueries()
 })
 </script>
 
@@ -618,5 +855,31 @@ td:last-child { border-right: none; }
 /* ── Event action link ── */
 .ev-link { color: #4361ee; font-weight: 600; font-size: 12px; text-decoration: none; white-space: nowrap; padding: 3px 8px; border: 1px solid #4361ee; border-radius: 4px; transition: background .12s; }
 .ev-link:hover { background: #eef1fd; }
+
+/* ── Custom Queries tab ── */
+.cq-load-error { color: #c53030; background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px; padding: 16px 20px; font-size: 13px; line-height: 1.6; }
+.cq-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 18px; align-items: start; }
+.cq-card {
+  background: #fff; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,.08);
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 2px solid transparent; transition: border-color .15s, box-shadow .15s;
+}
+.cq-card:hover { box-shadow: 0 4px 16px rgba(67,97,238,.12); }
+.cq-card--active { border-color: #4361ee; }
+.cq-card-header { display: flex; align-items: center; gap: 8px; padding: 10px 16px 0; }
+.cq-type-badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 20px; }
+.cq-badge-data   { background: #e0e7ff; color: #3730a3; }
+.cq-badge-events { background: #dcfce7; color: #166534; }
+.cq-farm-tag { font-size: 11px; color: #888; font-family: monospace; margin-left: auto; }
+.cq-card-body { padding: 10px 16px 14px; flex: 1; }
+.cq-title { font-size: 14px; font-weight: 700; color: #1a1a2e; margin-bottom: 5px; }
+.cq-desc  { font-size: 12px; color: #666; line-height: 1.5; margin-bottom: 10px; }
+.cq-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+.chip { font-size: 11px; background: #f0f2f5; border: 1px solid #e4e7ec; border-radius: 4px; padding: 2px 7px; color: #444; white-space: nowrap; }
+.cq-card-footer { padding: 10px 16px 14px; border-top: 1px solid #f0f2f5; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.cq-run-btn { padding: 8px 20px; font-size: 13px; }
+.cq-results { border-top: 2px solid #4361ee; padding: 14px 16px; background: #fafbff; }
+.cq-results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+
 </style>
 

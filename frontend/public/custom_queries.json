@@ -1,0 +1,75 @@
+[
+  {
+    "id": "kelmarsh-t2-forced-outages",
+    "name": "Kelmarsh T2 — Forced Outages",
+    "description": "All forced outage events for Kelmarsh turbine 2 across the full dataset",
+    "type": "events",
+    "farm": "kelmarsh",
+    "turbine": "turbine_2",
+    "iec_category": "Forced outage",
+    "limit": 500
+  },
+  {
+    "id": "kelmarsh-t2-scheduled-maintenance",
+    "name": "Kelmarsh T2 — Scheduled Maintenance",
+    "description": "All scheduled maintenance events for Kelmarsh turbine 2",
+    "type": "events",
+    "farm": "kelmarsh",
+    "turbine": "turbine_2",
+    "iec_category": "Scheduled Maintenance",
+    "limit": 500
+  },
+  {
+    "id": "kelmarsh-t2-partial-performance",
+    "name": "Kelmarsh T2 — Partial Performance",
+    "description": "Events where the turbine was running below full capacity (curtailment, grid limits, etc.)",
+    "type": "events",
+    "farm": "kelmarsh",
+    "turbine": "turbine_2",
+    "iec_category": "Partial Performance",
+    "limit": 500
+  },
+  {
+    "id": "kelmarsh-t2-out-of-env-spec",
+    "name": "Kelmarsh T2 — Out of Environmental Specification",
+    "description": "Events where the turbine stopped due to environmental conditions (e.g. low/high wind, icing)",
+    "type": "events",
+    "farm": "kelmarsh",
+    "turbine": "turbine_2",
+    "iec_category": "Out of Environmental Specification",
+    "limit": 500
+  },
+  {
+    "id": "kelmarsh-t2-high-wind-day",
+    "name": "Kelmarsh T2 — Sample High Wind Hour",
+    "description": "10-minute production data for a high-wind slot on 9 Jun 2016, hours 0–6",
+    "type": "data",
+    "farm": "kelmarsh",
+    "turbine": "turbine_2",
+    "date": "2016-06-09",
+    "file_type": "data",
+    "columns": ["Date and time", "Wind speed (m/s)", "Power (kW)", "Rotor speed (RPM)", "Generator RPM (RPM)"],
+    "hour_from": 0,
+    "hour_to": 6
+  },
+  {
+    "id": "penmanshiel-t1-forced-outages",
+    "name": "Penmanshiel T1 — Forced Outages",
+    "description": "All forced outage events for Penmanshiel turbine 1",
+    "type": "events",
+    "farm": "penmanshiel",
+    "turbine": "turbine_1",
+    "iec_category": "Forced outage",
+    "limit": 500
+  },
+  {
+    "id": "penmanshiel-t1-requested-shutdown",
+    "name": "Penmanshiel T1 — Requested Shutdown",
+    "description": "All requested shutdown events (operator-initiated stops) for Penmanshiel turbine 1",
+    "type": "events",
+    "farm": "penmanshiel",
+    "turbine": "turbine_1",
+    "iec_category": "Requested Shutdown",
+    "limit": 500
+  }
+]
