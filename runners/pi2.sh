@@ -14,7 +14,8 @@ set -euo pipefail
 API="${WINDDATA_API:-https://winddataapi-backend.onrender.com}"
 FARM="${WIND_FARM:-kelmarsh}"
 ITERATIONS="${CRAWL_ITERATIONS:-2}"    # 2 slots × ~3 min delay ≈ 6 min per pattern
-DELAY="${CRAWL_DELAY:-180}"            # 3 min between API calls — no rush
+DELAY="${CRAWL_DELAY:-180}"            # 3 min between slots — no rush
+TURBINE_DELAY="${CRAWL_TURBINE_DELAY:-1}"  # 1 s between turbines once first matches
 LOCK="/tmp/apicrawler_pi2.lock"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -60,6 +61,7 @@ echo "$(date -u +%FT%TZ)  [pi2] Running: rated_power" | tee -a "$LOG_FILE"
     --pattern      rated_power \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
     --seed         "$SEED" \
     2>&1 | tee -a "$LOG_FILE"
 
@@ -70,6 +72,7 @@ echo "$(date -u +%FT%TZ)  [pi2] Running: partial_performance" | tee -a "$LOG_FIL
     --pattern      partial_performance \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 1000000)) \
     2>&1 | tee -a "$LOG_FILE"
 

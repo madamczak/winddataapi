@@ -16,7 +16,8 @@ set -euo pipefail
 API="${WINDDATA_API:-https://winddataapi-backend.onrender.com}"
 FARM="${WIND_FARM:-kelmarsh}"
 ITERATIONS="${CRAWL_ITERATIONS:-1}"    # 1 slot × 3 patterns × ~3 min delay ≈ 9 min
-DELAY="${CRAWL_DELAY:-180}"            # 3 min between API calls — no rush
+DELAY="${CRAWL_DELAY:-180}"            # 3 min between slots — no rush
+TURBINE_DELAY="${CRAWL_TURBINE_DELAY:-1}"  # 1 s between turbines once first matches
 LOCK="/tmp/apicrawler_pi3.lock"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -63,6 +64,7 @@ echo "$(date -u +%FT%TZ)  [pi3] Running: blade_rpm_15 (turbines 2-6)" | tee -a "
     --pattern      blade_rpm_15 \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
     --seed         "$SEED" \
     --turbines     turbine_2 turbine_3 turbine_4 turbine_5 turbine_6 \
     2>&1 | tee -a "$LOG_FILE"
@@ -74,6 +76,7 @@ echo "$(date -u +%FT%TZ)  [pi3] Running: low_wind_cutin" | tee -a "$LOG_FILE"
     --pattern      low_wind_cutin \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 1000000)) \
     2>&1 | tee -a "$LOG_FILE"
 
@@ -84,6 +87,7 @@ echo "$(date -u +%FT%TZ)  [pi3] Running: high_nacelle_temp" | tee -a "$LOG_FILE"
     --pattern      high_nacelle_temp \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 2000000)) \
     2>&1 | tee -a "$LOG_FILE"
 

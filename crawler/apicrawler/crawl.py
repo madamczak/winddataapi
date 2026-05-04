@@ -288,6 +288,7 @@ def crawl(
     iterations: int,
     output_path: Path,
     delay: float,
+    turbine_delay: float,
     seed: Optional[int],
     turbines_filter: Optional[list[str]],
 ) -> None:
@@ -303,6 +304,7 @@ def crawl(
     log.info(f"API     : {api_base}")
     log.info(f"Output  : {output_path}")
     log.info(f"Samples : {iterations}")
+    log.info(f"Delay   : {delay} s between slots / {turbine_delay} s between turbine checks")
 
     if seed is not None:
         random.seed(seed)
@@ -355,7 +357,7 @@ def crawl(
             log.warning(f"  ✗ API error for {turbines[0]} — skipping slot")
             skipped += 1
             if delay:
-                time.sleep(delay)
+                time.sleep(delay)          # slot delay — wait before next random slot
             continue
 
         passed, details = evaluate_pattern(first_data, pattern)
@@ -363,7 +365,7 @@ def crawl(
             reason = details.pop("reason", "—")
             log.debug(f"  ✗ {turbines[0]} failed: {reason}")
             if delay:
-                time.sleep(delay)
+                time.sleep(delay)          # slot delay — first turbine failed, move on
             continue
 
         log.info(f"  ✓ {turbines[0]} matches — checking remaining {len(turbines)-1} turbines…")
@@ -373,10 +375,10 @@ def crawl(
         all_passed = True
 
         for turbine in turbines[1:]:
+            if turbine_delay:
+                time.sleep(turbine_delay)  # short delay — within a promising slot
             t_data = fetch_hour_data(
                 session, api_base, farm, turbine, date_str, sample_h, columns)
-            if delay:
-                time.sleep(delay)
 
             if t_data is None:
                 log.warning(f"  ✗ API error for {turbine} — aborting slot")
@@ -395,7 +397,7 @@ def crawl(
 
         if not all_passed:
             if delay:
-                time.sleep(delay)
+                time.sleep(delay)          # slot delay — partial match, move on
             continue
 
         # ── All turbines match! ───────────────────────────────────────────────
@@ -469,10 +471,18 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--delay",
         type=float,
-        default=0.05,
+        default=180.0,
         metavar="SECONDS",
-        help="Seconds to sleep between API calls (default: 0.05). "
-             "Increase for remote/rate-limited APIs.",
+        help="Seconds to sleep between slots (after first turbine check). Default: 180 (3 min).",
+    )
+    p.add_argument(
+        "--turbine-delay",
+        type=float,
+        default=1.0,
+        metavar="SECONDS",
+        dest="turbine_delay",
+        help="Seconds to sleep between turbine checks within a promising slot "
+             "(only triggered when the first turbine matches). Default: 1.",
     )
     p.add_argument(
         "--turbines",
@@ -534,6 +544,7 @@ def main() -> None:
         iterations      = args.iterations,
         output_path     = output,
         delay           = args.delay,
+        turbine_delay   = args.turbine_delay,
         seed            = args.seed,
         turbines_filter = args.turbines,
     )
