@@ -1,0 +1,4 @@
+# Don't commit the API URL or runtime logs
+.env
+logs/
+
