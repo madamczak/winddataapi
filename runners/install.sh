@@ -59,7 +59,7 @@ if [ ! -f "$ENV_FILE" ]; then
     cat > "$ENV_FILE" <<'EOF'
 # Set this to your production API base URL.
 # It will be sourced by the runner scripts automatically.
-WINDDATA_API=https://your-api.onrender.com
+WINDDATA_API=https://winddataapi-backend.onrender.com
 # Optional overrides:
 # WIND_FARM=kelmarsh
 # CRAWL_ITERATIONS=2    # slots per pattern per run (default: 2 for Pi1/2, 1 for Pi3)

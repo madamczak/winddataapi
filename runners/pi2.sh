@@ -11,7 +11,7 @@
 # =============================================================================
 set -euo pipefail
 
-API="${WINDDATA_API:-https://your-api.onrender.com}"
+API="${WINDDATA_API:-https://winddataapi-backend.onrender.com}"
 FARM="${WIND_FARM:-kelmarsh}"
 ITERATIONS="${CRAWL_ITERATIONS:-2}"    # 2 slots × ~3 min delay ≈ 6 min per pattern
 DELAY="${CRAWL_DELAY:-180}"            # 3 min between API calls — no rush
