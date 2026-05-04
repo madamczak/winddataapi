@@ -18,11 +18,23 @@ app.add_middleware(
 )
 
 
+def _client_ip(request: Request) -> str:
+    """Return real client IP, honouring X-Forwarded-For (set by Render's proxy)."""
+    forwarded_for = request.headers.get("x-forwarded-for")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     start = time.perf_counter()
+    ip = _client_ip(request)
     response: Response = await call_next(request)
     duration = time.perf_counter() - start
+    dur_ms = round(duration * 1000)
     labels = {
         "method":   request.method,
         "endpoint": request.url.path,
@@ -32,6 +44,11 @@ async def metrics_middleware(request: Request, call_next):
     request_duration.record(duration, labels)
     if response.status_code >= 400:
         error_counter.add(1, labels)
+    log.info(
+        f"{request.method} {request.url.path} "
+        f"status={response.status_code} ip={ip} duration_ms={dur_ms}",
+        extra={"loki_ip": ip, "loki_endpoint": request.url.path},
+    )
     return response
 
 
@@ -82,6 +99,7 @@ def get_columns():
 
 @app.get('/wind-farms/{farm}/data/{date}')
 def get_day_data(
+    request: Request,
     farm: str,
     date: str,
     file_type: str = Query('data', description="'data' or 'status'"),
@@ -92,6 +110,7 @@ def get_day_data(
 ):
     """Fetch rows for a farm/turbine/date with optional column + hour filters."""
     from .telemetry import rows_returned
+    ip = _client_ip(request)
     if not turbine:
         turbines = db.get_farm_turbines(farm)
         if not turbines:
@@ -107,20 +126,79 @@ def get_day_data(
         log.info(
             f"query farm={farm} turbine={turbine} date={date} "
             f"hours={hour_from}-{hour_to} type={file_type} "
-            f"rows={count} duration_ms={dur_ms}",
+            f"rows={count} duration_ms={dur_ms} ip={ip}",
             extra={
                 "loki_farm": farm,
                 "loki_turbine": turbine,
                 "loki_file_type": file_type,
+                "loki_ip": ip,
             },
         )
         return result
     except FileNotFoundError as exc:
-        log.warning(f"Not found: farm={farm} turbine={turbine} date={date} — {exc}")
+        log.warning(f"Not found: farm={farm} turbine={turbine} date={date} ip={ip} — {exc}")
         raise HTTPException(404, str(exc))
     except Exception as exc:
-        log.error(f"Error: farm={farm} turbine={turbine} date={date} — {exc}")
+        log.error(f"Error: farm={farm} turbine={turbine} date={date} ip={ip} — {exc}")
         raise HTTPException(500, str(exc))
+
+
+@app.get('/wind-farms/{farm}/{turbine}/event-types')
+def get_event_types(farm: str, turbine: str):
+    """Return distinct IEC category values available in the status table for a turbine."""
+    site = f'{farm}_status_by_turbine'
+    sites = db.discover_sites()
+    if site not in sites:
+        raise HTTPException(404, f"Status site not found for farm '{farm}'")
+    try:
+        con = db._connect(sites[site])
+        cur = con.cursor()
+        cur.execute(f'SELECT DISTINCT "IEC category" FROM "{turbine}" WHERE "IEC category" IS NOT NULL ORDER BY "IEC category"')
+        types = [r[0] for r in cur.fetchall()]
+        con.close()
+        return {'event_types': types}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.get('/wind-farms/{farm}/{turbine}/events')
+def get_events(
+    farm: str,
+    turbine: str,
+    iec_category: Optional[str] = Query(None, description='Filter by IEC category, e.g. "Full Performance"'),
+    status: Optional[str] = Query(None, description='Filter by Status value'),
+    limit: int = Query(500, ge=1, le=5000),
+):
+    """Return events (status records) for a turbine, optionally filtered by IEC category."""
+    site = f'{farm}_status_by_turbine'
+    sites = db.discover_sites()
+    if site not in sites:
+        raise HTTPException(404, f"Status site not found for farm '{farm}'")
+    try:
+        con = db._connect(sites[site])
+        cur = con.cursor()
+        # Get column names
+        cur.execute(f'PRAGMA table_info("{turbine}")')
+        cols = [r[1] for r in cur.fetchall()]
+        where_clauses = []
+        params = []
+        if iec_category:
+            where_clauses.append('"IEC category" = ?')
+            params.append(iec_category)
+        if status:
+            where_clauses.append('"Status" = ?')
+            params.append(status)
+        where_sql = ('WHERE ' + ' AND '.join(where_clauses)) if where_clauses else ''
+        ts_col = 'Timestamp start' if 'Timestamp start' in cols else cols[0]
+        sel = ', '.join([f'"{c}"' for c in cols])
+        sql = f'SELECT {sel} FROM "{turbine}" {where_sql} ORDER BY "{ts_col}" DESC LIMIT {int(limit)}'
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+        con.close()
+        events = [dict(zip(cols, row)) for row in rows]
+        return {'farm': farm, 'turbine': turbine, 'columns': cols, 'events': events, 'count': len(events)}
+    except Exception as e:
+        raise HTTPException(500, str(e))
 
 
 @app.get(
@@ -128,6 +206,7 @@ def get_day_data(
     summary='Query turbine data or status for a wind farm between a start and end datetime',
 )
 def farm_turbine_query(
+    request: Request,
     farm: str,
     data_type: Literal['data', 'status'],
     turbine: str,
@@ -144,6 +223,7 @@ def farm_turbine_query(
     - `start` / `end` – optional ISO datetime bounds (inclusive)
     """
     site = f'{farm}_{data_type}_by_turbine'
+    ip = _client_ip(request)
     try:
         from .telemetry import rows_returned
         t0   = time.perf_counter()
@@ -153,11 +233,12 @@ def farm_turbine_query(
         rows_returned.record(len(rows), labels)
         log.info(
             f"query farm={farm} turbine={turbine} type={data_type} "
-            f"start={start} end={end} rows={len(rows)} duration_ms={dur_ms}",
+            f"start={start} end={end} rows={len(rows)} duration_ms={dur_ms} ip={ip}",
             extra={
                 "loki_farm": farm,
                 "loki_turbine": turbine,
                 "loki_data_type": data_type,
+                "loki_ip": ip,
             },
         )
         return {
@@ -171,11 +252,11 @@ def farm_turbine_query(
         }
     except FileNotFoundError:
         available = [s for s in db.discover_sites() if s.startswith(farm)]
-        log.warning(f"Site not found: {site} — available: {available}")
+        log.warning(f"Site not found: {site} ip={ip} — available: {available}")
         raise HTTPException(
             status_code=404,
             detail=f"Site '{site}' not found. Available sites matching farm '{farm}': {available}",
         )
     except Exception as e:
-        log.error(f"Error querying {site}/{turbine}: {e}")
+        log.error(f"Error querying {site}/{turbine} ip={ip}: {e}")
         raise HTTPException(status_code=500, detail=str(e))

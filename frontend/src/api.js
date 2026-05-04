@@ -46,6 +46,34 @@ export async function fetchColumns() {
 }
 
 /**
+ * Fetch distinct IEC category event types for a farm/turbine.
+ * @returns {Promise<string[]>}
+ */
+export async function fetchEventTypes(farm, turbine) {
+  const res = await fetch(`${BASE_URL}/wind-farms/${farm}/${turbine}/event-types`)
+  if (!res.ok) throw new Error(`Failed to fetch event types: ${res.status}`)
+  const data = await res.json()
+  return data.event_types
+}
+
+/**
+ * Fetch status events for a turbine, filtered by IEC category and/or status.
+ * @returns {Promise<{columns: string[], events: object[], count: number}>}
+ */
+export async function fetchEvents(farm, turbine, iecCategory = null, status = null, limit = 500) {
+  const params = new URLSearchParams()
+  if (iecCategory) params.set('iec_category', iecCategory)
+  if (status) params.set('status', status)
+  params.set('limit', limit)
+  const res = await fetch(`${BASE_URL}/wind-farms/${farm}/${turbine}/events?${params.toString()}`)
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }))
+    throw new Error(err.detail ?? `Request failed: ${res.status}`)
+  }
+  return res.json()
+}
+
+/**
  * Fetch data rows for a specific farm, turbine, date, and file type.
  *
  * @param {string}   farm       Directory name, e.g. "kelmarsh"
@@ -74,4 +102,3 @@ export async function fetchDayData(farm, date, fileType, turbine, columns = [], 
   }
   return res.json()
 }
-

@@ -3,7 +3,10 @@ import glob
 import sqlite3
 from typing import List, Dict, Optional, Tuple
 
-BASE_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data_by_turbine'))
+# DATA_DIR can be overridden by the DATA_DIR environment variable.
+# Default: the data_by_turbine/ folder next to the project root.
+_default = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data_by_turbine'))
+BASE_DIR = os.environ.get('DATA_DIR', _default)
 
 
 def discover_sites() -> Dict[str, str]:
