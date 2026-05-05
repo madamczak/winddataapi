@@ -28,6 +28,31 @@ def _client_ip(request: Request) -> str:
     return "unknown"
 
 
+# Route templates for series-safe endpoint labels
+# Map regex prefixes → stable label so dynamic path params don't explode Grafana series.
+import re as _re
+_ENDPOINT_PATTERNS = [
+    (_re.compile(r'^/wind-farms/[^/]+/[^/]+/event-types'), '/wind-farms/{farm}/{turbine}/event-types'),
+    (_re.compile(r'^/wind-farms/[^/]+/[^/]+/events'),      '/wind-farms/{farm}/{turbine}/events'),
+    (_re.compile(r'^/wind-farms/[^/]+/data/'),              '/wind-farms/{farm}/data/{date}'),
+    (_re.compile(r'^/wind-farms/time-ranges'),              '/wind-farms/time-ranges'),
+    (_re.compile(r'^/wind-farms/columns'),                  '/wind-farms/columns'),
+    (_re.compile(r'^/wind-farms'),                          '/wind-farms'),
+    (_re.compile(r'^/farms/'),                              '/farms/{farm}/{data_type}/turbines/{turbine}/query'),
+    (_re.compile(r'^/health'),                              '/health'),
+]
+
+
+def _normalize_endpoint(path: str) -> str:
+    """Replace dynamic path segments with a fixed template to avoid series explosion."""
+    for pattern, label in _ENDPOINT_PATTERNS:
+        if pattern.match(path):
+            return label
+    # Fallback: strip everything after the 3rd slash so we never leak unbounded values
+    parts = path.split('/')
+    return '/'.join(parts[:4]) or path
+
+
 @app.middleware("http")
 async def metrics_middleware(request: Request, call_next):
     start = time.perf_counter()
@@ -35,15 +60,21 @@ async def metrics_middleware(request: Request, call_next):
     response: Response = await call_next(request)
     duration = time.perf_counter() - start
     dur_ms = round(duration * 1000)
-    labels = {
+    endpoint = _normalize_endpoint(request.url.path)
+    counter_labels = {
         "method":   request.method,
-        "endpoint": request.url.path,
+        "endpoint": endpoint,
         "status":   str(response.status_code),
     }
-    request_counter.add(1, labels)
-    request_duration.record(duration, labels)
+    # Histogram uses fewer labels (no endpoint) to keep bucket series low
+    duration_labels = {
+        "method": request.method,
+        "status": str(response.status_code),
+    }
+    request_counter.add(1, counter_labels)
+    request_duration.record(duration, duration_labels)
     if response.status_code >= 400:
-        error_counter.add(1, labels)
+        error_counter.add(1, counter_labels)
     log.info(
         f"{request.method} {request.url.path} "
         f"status={response.status_code} ip={ip} duration_ms={dur_ms}",
@@ -121,7 +152,7 @@ def get_day_data(
         result = db.query_day_rows(farm, file_type, turbine, date, columns or [], hour_from, hour_to)
         dur_ms = round((time.perf_counter() - t0) * 1000)
         count  = len(result.get("rows", []))
-        labels = {"farm": farm, "turbine": turbine, "file_type": file_type}
+        labels = {"farm": farm, "file_type": file_type}
         rows_returned.record(count, labels)
         log.info(
             f"query farm={farm} turbine={turbine} date={date} "
@@ -229,7 +260,7 @@ def farm_turbine_query(
         t0   = time.perf_counter()
         rows = db.query_rows(site, turbine, start=start, end=end, limit=limit)
         dur_ms = round((time.perf_counter() - t0) * 1000)
-        labels = {"farm": farm, "turbine": turbine, "data_type": data_type}
+        labels = {"farm": farm, "data_type": data_type}
         rows_returned.record(len(rows), labels)
         log.info(
             f"query farm={farm} turbine={turbine} type={data_type} "
