@@ -158,13 +158,20 @@ def query_day_rows(
     farm: str,
     data_type: str,
     turbine: str,
-    date: str,
+    date_from: str,
     columns: List[str] = None,
     hour_from: Optional[int] = None,
     hour_to: Optional[int] = None,
     limit: int = 10000,
+    date_to: Optional[str] = None,
 ) -> Dict:
-    """Query rows for a specific farm/turbine/date with optional hour filter."""
+    """Query rows for a specific farm/turbine/date range with optional hour filter.
+
+    date_to defaults to date_from (single-day query).
+    When querying multi-day ranges the hour_from/hour_to filters apply on the
+    first and last day respectively; intermediate days are returned in full.
+    """
+    date_to = date_to or date_from
     site = f'{farm}_{data_type}_by_turbine'
     sites = discover_sites()
     if site not in sites:
@@ -183,8 +190,8 @@ def query_day_rows(
 
     h_from = hour_from if hour_from is not None else 0
     h_to   = hour_to   if hour_to   is not None else 23
-    start  = f'{date} {h_from:02d}:00:00'
-    end    = f'{date} {h_to:02d}:59:59'
+    start  = f'{date_from} {h_from:02d}:00:00'
+    end    = f'{date_to} {h_to:02d}:59:59'
 
     sel = ', '.join([f'"{c}"' for c in sel_cols])
     sql = (
@@ -205,7 +212,8 @@ def query_day_rows(
         'row_count': len(rows),
         'farm':      farm,
         'file_type': data_type,
-        'date':      date,
+        'date':      date_from,
+        'date_to':   date_to,
         'turbine':   turbine,
     }
 

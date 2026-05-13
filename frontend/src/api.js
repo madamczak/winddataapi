@@ -74,18 +74,19 @@ export async function fetchEvents(farm, turbine, iecCategory = null, status = nu
 }
 
 /**
- * Fetch data rows for a specific farm, turbine, date, and file type.
+ * Fetch data rows for a specific farm, turbine, date range, and file type.
  *
- * @param {string}   farm       Directory name, e.g. "kelmarsh"
- * @param {string}   date       ISO date string "YYYY-MM-DD"
- * @param {string}   fileType   "data" or "status"
- * @param {string}   turbine    Turbine name, e.g. "turbine_1"
- * @param {string[]} columns    Empty array = return all columns
- * @param {number|null} hourFrom  Filter from this hour (0–23), or null
- * @param {number|null} hourTo    Filter up to this hour (0–23), or null
+ * @param {string}      farm       Directory name, e.g. "kelmarsh"
+ * @param {string}      dateFrom   ISO date string "YYYY-MM-DD" (start)
+ * @param {string}      fileType   "data" or "status"
+ * @param {string}      turbine    Turbine name, e.g. "turbine_1"
+ * @param {string[]}    columns    Empty array = return all columns
+ * @param {number|null} hourFrom   Filter from this hour (0–23) on first day, or null
+ * @param {number|null} hourTo     Filter up to this hour (0–23) on last day, or null
+ * @param {string|null} dateTo     ISO date string "YYYY-MM-DD" (end), or null for single day
  * @returns {Promise<{columns: string[], rows: any[][], row_count: number}>}
  */
-export async function fetchDayData(farm, date, fileType, turbine, columns = [], hourFrom = null, hourTo = null) {
+export async function fetchDayData(farm, dateFrom, fileType, turbine, columns = [], hourFrom = null, hourTo = null, dateTo = null) {
   const params = new URLSearchParams()
   params.set('file_type', fileType)
   if (turbine) params.set('turbine', turbine)
@@ -94,7 +95,8 @@ export async function fetchDayData(farm, date, fileType, turbine, columns = [], 
   }
   if (hourFrom !== null && hourFrom !== '') params.set('hour_from', hourFrom)
   if (hourTo   !== null && hourTo   !== '') params.set('hour_to',   hourTo)
-  const url = `${BASE_URL}/wind-farms/${farm}/data/${date}?${params.toString()}`
+  if (dateTo && dateTo !== dateFrom)        params.set('date_to',   dateTo)
+  const url = `${BASE_URL}/wind-farms/${farm}/data/${dateFrom}?${params.toString()}`
   const res = await fetch(url)
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))

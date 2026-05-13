@@ -138,10 +138,25 @@ def get_day_data(
     columns: List[str] = Query([], description='Columns to return; empty = all'),
     hour_from: Optional[int] = Query(None, ge=0, le=23),
     hour_to:   Optional[int] = Query(None, ge=0, le=23),
+    date_to:   Optional[str] = Query(None, description='End date for multi-day range (YYYY-MM-DD). Max 7 days from date.'),
 ):
-    """Fetch rows for a farm/turbine/date with optional column + hour filters."""
+    """Fetch rows for a farm/turbine/date (range) with optional column + hour filters."""
     from .telemetry import rows_returned
+    import datetime as _dt
     ip = _client_ip(request)
+
+    # Validate date range
+    effective_date_to = date_to or date
+    try:
+        d_from = _dt.date.fromisoformat(date)
+        d_to   = _dt.date.fromisoformat(effective_date_to)
+    except ValueError as exc:
+        raise HTTPException(400, f"Invalid date format: {exc}")
+    if d_to < d_from:
+        raise HTTPException(400, "date_to must be >= date (the start date)")
+    if (d_to - d_from).days > 6:
+        raise HTTPException(400, "Date range must not exceed 7 days")
+
     if not turbine:
         turbines = db.get_farm_turbines(farm)
         if not turbines:
@@ -149,13 +164,17 @@ def get_day_data(
         turbine = turbines[0]
     try:
         t0     = time.perf_counter()
-        result = db.query_day_rows(farm, file_type, turbine, date, columns or [], hour_from, hour_to)
+        result = db.query_day_rows(
+            farm, file_type, turbine, date,
+            columns or [], hour_from, hour_to,
+            date_to=effective_date_to,
+        )
         dur_ms = round((time.perf_counter() - t0) * 1000)
         count  = len(result.get("rows", []))
         labels = {"farm": farm, "file_type": file_type}
         rows_returned.record(count, labels)
         log.info(
-            f"query farm={farm} turbine={turbine} date={date} "
+            f"query farm={farm} turbine={turbine} date={date}..{effective_date_to} "
             f"hours={hour_from}-{hour_to} type={file_type} "
             f"rows={count} duration_ms={dur_ms} ip={ip}",
             extra={

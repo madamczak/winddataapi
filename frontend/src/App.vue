@@ -40,17 +40,21 @@
               </select>
             </div>
             <div class="control-group">
-              <label for="date-input">Date</label>
-              <input id="date-input" type="date" v-model="selectedDate" :min="minDate" :max="maxDate" :disabled="!selectedFarm" />
+              <label for="date-from-input">Date From</label>
+              <input id="date-from-input" type="date" v-model="selectedDateFrom" :min="minDate" :max="maxDate" :disabled="!selectedFarm" @change="onDateFromChange" />
               <span v-if="minDate && maxDate" class="date-hint">{{ minDate }} → {{ maxDate }}</span>
             </div>
             <div class="control-group">
+              <label for="date-to-input">Date To <span class="date-hint" style="font-size:10px;">(max 7 days)</span></label>
+              <input id="date-to-input" type="date" v-model="selectedDateTo" :min="selectedDateFrom || minDate" :max="maxDateTo" :disabled="!selectedDateFrom" />
+            </div>
+            <div class="control-group">
               <label>Hour From</label>
-              <input type="number" v-model.number="hourFrom" min="0" max="23" placeholder="0" :disabled="!selectedDate" class="hour-input" />
+              <input type="number" v-model.number="hourFrom" min="0" max="23" placeholder="0" :disabled="!selectedDateFrom" class="hour-input" />
             </div>
             <div class="control-group">
               <label>Hour To</label>
-              <input type="number" v-model.number="hourTo" min="0" max="23" placeholder="23" :disabled="!selectedDate" class="hour-input" />
+              <input type="number" v-model.number="hourTo" min="0" max="23" placeholder="23" :disabled="!selectedDateFrom" class="hour-input" />
             </div>
           </div>
 
@@ -81,7 +85,9 @@
 
         <section v-if="result" class="results card">
           <div class="results-header">
-            <h2>{{ result.farm }} / {{ result.turbine }} / {{ result.file_type }} / {{ result.date }}</h2>
+            <h2>{{ result.farm }} / {{ result.turbine }} / {{ result.file_type }} /
+              {{ result.date }}<template v-if="result.date_to && result.date_to !== result.date"> → {{ result.date_to }}</template>
+            </h2>
             <span class="row-count">{{ result.row_count.toLocaleString() }} rows</span>
           </div>
 
@@ -458,7 +464,8 @@ const timeRanges   = ref([])
 const selectedFarm     = ref('')
 const selectedTurbine  = ref('')
 const selectedFileType = ref('')
-const selectedDate     = ref('')
+const selectedDateFrom = ref('')
+const selectedDateTo   = ref('')
 const selectedColumns  = ref([])
 const allColumns       = ref(true)
 const hourFrom         = ref(null)
@@ -500,7 +507,16 @@ const maxDate = computed(() => {
   const tr = timeRanges.value.find(t => t.farm === selectedFarm.value)
   return tr?.latest?.slice(0, 10) ?? ''
 })
-const canFetch = computed(() => !!(selectedFarm.value && selectedTurbine.value && selectedFileType.value && selectedDate.value))
+/** Cap date_to at date_from + 6 days (7-day max) and never beyond farm's latest date */
+const maxDateTo = computed(() => {
+  if (!selectedDateFrom.value) return maxDate.value
+  const from = new Date(selectedDateFrom.value)
+  const cap  = new Date(from); cap.setDate(cap.getDate() + 6)
+  const farmMax = maxDate.value ? new Date(maxDate.value) : cap
+  const effective = cap < farmMax ? cap : farmMax
+  return effective.toISOString().slice(0, 10)
+})
+const canFetch = computed(() => !!(selectedFarm.value && selectedTurbine.value && selectedFileType.value && selectedDateFrom.value))
 
 const filteredRows = computed(() => {
   if (!result.value) return []
@@ -559,7 +575,16 @@ function onFarmChange() {
   const farm = farms.value.find(f => f.directory === selectedFarm.value)
   selectedTurbine.value = farm?.turbines?.[0] ?? ''
   const tr = timeRanges.value.find(t => t.farm === selectedFarm.value)
-  selectedDate.value = tr?.earliest ? tr.earliest.slice(0, 10) : ''
+  selectedDateFrom.value = tr?.earliest ? tr.earliest.slice(0, 10) : ''
+  selectedDateTo.value   = selectedDateFrom.value
+}
+function onDateFromChange() {
+  // If date_to is now before date_from or exceeds 7-day cap, reset it
+  if (!selectedDateTo.value || selectedDateTo.value < selectedDateFrom.value) {
+    selectedDateTo.value = selectedDateFrom.value
+  } else if (selectedDateTo.value > maxDateTo.value) {
+    selectedDateTo.value = maxDateTo.value
+  }
 }
 function onFileTypeChange() { selectedColumns.value = []; allColumns.value = true; result.value = null; error.value = '' }
 function onAllColumnsToggle() { if (allColumns.value) selectedColumns.value = [] }
@@ -574,9 +599,9 @@ function clearFilters() {
 }
 function downloadFile() {
   if (!result.value || filteredRows.value.length === 0) return
-  const { farm, file_type, date, columns } = result.value
+  const { farm, file_type, date, date_to, columns } = result.value
   const rows = filteredRows.value
-  const baseName = `${farm}_${file_type}_${date}`
+  const baseName = date_to && date_to !== date ? `${farm}_${file_type}_${date}_${date_to}` : `${farm}_${file_type}_${date}`
   let content, mimeType, fileName
   if (downloadFormat.value === 'json') {
     const objects = rows.map(row => Object.fromEntries(columns.map((col, i) => [col, row[i] ?? null])))
@@ -593,11 +618,13 @@ async function fetchData() {
   if (!canFetch.value) return
   loading.value = true; error.value = ''; result.value = null
   try {
-    const cols = allColumns.value ? [] : selectedColumns.value
+    const cols   = allColumns.value ? [] : selectedColumns.value
+    const dateTo = selectedDateTo.value && selectedDateTo.value !== selectedDateFrom.value ? selectedDateTo.value : null
     result.value = await fetchDayData(
-      selectedFarm.value, selectedDate.value, selectedFileType.value, selectedTurbine.value, cols,
+      selectedFarm.value, selectedDateFrom.value, selectedFileType.value, selectedTurbine.value, cols,
       hourFrom.value !== null && hourFrom.value !== '' ? hourFrom.value : null,
       hourTo.value   !== null && hourTo.value   !== '' ? hourTo.value   : null,
+      dateTo,
     )
     globalFilter.value = ''; colFilters.value = Array(result.value.columns.length).fill('')
     sortCol.value = null; sortDir.value = 1; tablePage.value = 0; activeTab.value = 'table'
@@ -671,7 +698,8 @@ async function goToDataForEvent(ev) {
   onFarmChange()
   selectedTurbine.value  = evTurbine.value
   selectedFileType.value = 'data'
-  selectedDate.value     = startDate
+  selectedDateFrom.value = startDate
+  selectedDateTo.value   = startDate
   hourFrom.value         = startHour
   hourTo.value           = endHour
   allColumns.value       = true
@@ -734,7 +762,8 @@ async function goToDataForCrawlerSlot(slot) {
   onFarmChange()
   selectedTurbine.value  = turbine
   selectedFileType.value = 'data'
-  selectedDate.value     = slot.date
+  selectedDateFrom.value = slot.date
+  selectedDateTo.value   = slot.date
   hourFrom.value         = slot.hour
   hourTo.value           = slot.hour
   allColumns.value       = true
@@ -765,7 +794,8 @@ async function runCustomQuery(q) {
     if (q.type === 'data') {
       result = await fetchDayData(
         q.farm, q.date, q.file_type ?? 'data', q.turbine,
-        q.columns ?? [], q.hour_from ?? null, q.hour_to ?? null
+        q.columns ?? [], q.hour_from ?? null, q.hour_to ?? null,
+        q.date_to ?? null,
       )
     } else {
       result = await fetchEvents(
@@ -829,7 +859,8 @@ async function goToDataFromCq(ev, q) {
   selectedFarm.value = q.farm; onFarmChange()
   selectedTurbine.value  = q.turbine
   selectedFileType.value = 'data'
-  selectedDate.value     = tsStart.slice(0, 10)
+  selectedDateFrom.value = tsStart.slice(0, 10)
+  selectedDateTo.value   = selectedDateFrom.value
   hourFrom.value         = parseInt(tsStart.slice(11, 13), 10)
   hourTo.value           = tsEnd ? Math.min(23, parseInt(tsEnd.slice(11, 13), 10)) : hourFrom.value
   allColumns.value       = true; selectedColumns.value = []
