@@ -74,12 +74,12 @@ export async function fetchEvents(farm, turbine, iecCategory = null, status = nu
 }
 
 /**
- * Fetch data rows for a specific farm, turbine, date range, and file type.
+ * Fetch data rows for a specific farm, turbine(s), date range, and file type.
  *
  * @param {string}      farm       Directory name, e.g. "kelmarsh"
  * @param {string}      dateFrom   ISO date string "YYYY-MM-DD" (start)
  * @param {string}      fileType   "data" or "status"
- * @param {string}      turbine    Turbine name, e.g. "turbine_1"
+ * @param {string|string[]} turbine  Single turbine name or array of names
  * @param {string[]}    columns    Empty array = return all columns
  * @param {number|null} hourFrom   Filter from this hour (0–23) on first day, or null
  * @param {number|null} hourTo     Filter up to this hour (0–23) on last day, or null
@@ -89,10 +89,10 @@ export async function fetchEvents(farm, turbine, iecCategory = null, status = nu
 export async function fetchDayData(farm, dateFrom, fileType, turbine, columns = [], hourFrom = null, hourTo = null, dateTo = null) {
   const params = new URLSearchParams()
   params.set('file_type', fileType)
-  if (turbine) params.set('turbine', turbine)
-  for (const col of columns) {
-    params.append('columns', col)
-  }
+  // Support single turbine or array of turbines
+  const turbineList = Array.isArray(turbine) ? turbine : (turbine ? [turbine] : [])
+  for (const t of turbineList) params.append('turbines', t)
+  for (const col of columns) params.append('columns', col)
   if (hourFrom !== null && hourFrom !== '') params.set('hour_from', hourFrom)
   if (hourTo   !== null && hourTo   !== '') params.set('hour_to',   hourTo)
   if (dateTo && dateTo !== dateFrom)        params.set('date_to',   dateTo)

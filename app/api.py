@@ -134,13 +134,14 @@ def get_day_data(
     farm: str,
     date: str,
     file_type: str = Query('data', description="'data' or 'status'"),
-    turbine: Optional[str] = Query(None, description='Turbine table name, e.g. turbine_1'),
-    columns: List[str] = Query([], description='Columns to return; empty = all'),
-    hour_from: Optional[int] = Query(None, ge=0, le=23),
-    hour_to:   Optional[int] = Query(None, ge=0, le=23),
-    date_to:   Optional[str] = Query(None, description='End date for multi-day range (YYYY-MM-DD). Max 7 days from date.'),
+    turbine:  Optional[str]   = Query(None, description='Single turbine (use turbines for multi-select)'),
+    turbines: List[str]       = Query([], description='One or more turbine names; if empty falls back to turbine param'),
+    columns:  List[str]       = Query([], description='Columns to return; empty = all'),
+    hour_from: Optional[int]  = Query(None, ge=0, le=23),
+    hour_to:   Optional[int]  = Query(None, ge=0, le=23),
+    date_to:   Optional[str]  = Query(None, description='End date for multi-day range (YYYY-MM-DD). Max 7 days from date.'),
 ):
-    """Fetch rows for a farm/turbine/date (range) with optional column + hour filters."""
+    """Fetch rows for a farm/turbine(s)/date range with optional column + hour filters."""
     from .telemetry import rows_returned
     import datetime as _dt
     ip = _client_ip(request)
@@ -157,39 +158,69 @@ def get_day_data(
     if (d_to - d_from).days > 6:
         raise HTTPException(400, "Date range must not exceed 7 days")
 
-    if not turbine:
-        turbines = db.get_farm_turbines(farm)
-        if not turbines:
+    # Resolve turbine list
+    effective_turbines: List[str] = turbines if turbines else ([turbine] if turbine else [])
+    if not effective_turbines:
+        all_farm_turbines = db.get_farm_turbines(farm)
+        if not all_farm_turbines:
             raise HTTPException(404, f"No turbines found for farm '{farm}'")
-        turbine = turbines[0]
+        effective_turbines = [all_farm_turbines[0]]
+
     try:
-        t0     = time.perf_counter()
-        result = db.query_day_rows(
-            farm, file_type, turbine, date,
-            columns or [], hour_from, hour_to,
-            date_to=effective_date_to,
-        )
+        t0 = time.perf_counter()
+
+        if len(effective_turbines) == 1:
+            # Single-turbine path – identical to original behaviour
+            result = db.query_day_rows(
+                farm, file_type, effective_turbines[0], date,
+                columns or [], hour_from, hour_to,
+                date_to=effective_date_to,
+            )
+        else:
+            # Multi-turbine: query each, prepend a "Turbine" column, merge & sort by timestamp
+            merged_rows: List = []
+            sel_cols: Optional[List[str]] = None
+            ts_idx = 0  # will be 1 (after "Turbine" prepend) for sorting
+
+            for t in effective_turbines:
+                r = db.query_day_rows(
+                    farm, file_type, t, date,
+                    columns or [], hour_from, hour_to,
+                    date_to=effective_date_to,
+                )
+                if sel_cols is None:
+                    sel_cols = r['columns']
+                for row in r['rows']:
+                    merged_rows.append([t] + row)
+
+            # Sort by timestamp value (column index 1 = first data column after "Turbine")
+            merged_rows.sort(key=lambda r: (r[1] or ''))
+
+            result = {
+                'columns':   ['Turbine'] + (sel_cols or []),
+                'rows':      merged_rows,
+                'row_count': len(merged_rows),
+                'farm':      farm,
+                'file_type': file_type,
+                'date':      date,
+                'date_to':   effective_date_to,
+                'turbine':   ', '.join(effective_turbines),
+            }
+
         dur_ms = round((time.perf_counter() - t0) * 1000)
-        count  = len(result.get("rows", []))
-        labels = {"farm": farm, "file_type": file_type}
-        rows_returned.record(count, labels)
+        count  = result.get('row_count', 0)
+        rows_returned.record(count, {"farm": farm, "file_type": file_type})
         log.info(
-            f"query farm={farm} turbine={turbine} date={date}..{effective_date_to} "
-            f"hours={hour_from}-{hour_to} type={file_type} "
-            f"rows={count} duration_ms={dur_ms} ip={ip}",
-            extra={
-                "loki_farm": farm,
-                "loki_turbine": turbine,
-                "loki_file_type": file_type,
-                "loki_ip": ip,
-            },
+            f"query farm={farm} turbines={effective_turbines} date={date}..{effective_date_to} "
+            f"hours={hour_from}-{hour_to} type={file_type} rows={count} duration_ms={dur_ms} ip={ip}",
+            extra={"loki_farm": farm, "loki_file_type": file_type, "loki_ip": ip},
         )
         return result
     except FileNotFoundError as exc:
-        log.warning(f"Not found: farm={farm} turbine={turbine} date={date} ip={ip} — {exc}")
+        log.warning(f"Not found: farm={farm} turbines={effective_turbines} date={date} ip={ip} — {exc}")
         raise HTTPException(404, str(exc))
     except Exception as exc:
-        log.error(f"Error: farm={farm} turbine={turbine} date={date} ip={ip} — {exc}")
+        log.error(f"Error: farm={farm} turbines={effective_turbines} date={date} ip={ip} — {exc}")
         raise HTTPException(500, str(exc))
 
 

@@ -26,11 +26,30 @@
               </select>
             </div>
             <div class="control-group">
-              <label for="turbine-select">Turbine</label>
-              <select id="turbine-select" v-model="selectedTurbine" :disabled="!selectedFarm">
-                <option value="" disabled>— select turbine —</option>
-                <option v-for="t in availableTurbines" :key="t" :value="t">{{ t }}</option>
-              </select>
+              <label for="turbine-select">Turbines</label>
+              <div class="multiselect" :class="{ 'multiselect--open': turbineDropdownOpen, 'multiselect--disabled': !selectedFarm }">
+                <button
+                  class="multiselect-trigger"
+                  :disabled="!selectedFarm"
+                  @click="turbineDropdownOpen = !turbineDropdownOpen"
+                  type="button"
+                >
+                  <span class="multiselect-label">{{ turbineDropdownLabel }}</span>
+                  <span class="multiselect-arrow">▾</span>
+                </button>
+                <div v-if="turbineDropdownOpen" class="multiselect-dropdown">
+                  <div class="multiselect-actions">
+                    <button type="button" @click="selectedTurbines = [...availableTurbines]">All</button>
+                    <button type="button" @click="selectedTurbines = []">None</button>
+                  </div>
+                  <label v-for="t in availableTurbines" :key="t" class="checkbox-label multiselect-option">
+                    <input type="checkbox" :value="t" v-model="selectedTurbines" />
+                    <span>{{ t }}</span>
+                  </label>
+                </div>
+              </div>
+              <!-- backdrop closes dropdown on outside click -->
+              <div v-if="turbineDropdownOpen" class="multiselect-backdrop" @click="turbineDropdownOpen = false" />
             </div>
             <div class="control-group">
               <label for="file-type-select">File Type</label>
@@ -462,7 +481,7 @@ const columnsMap   = ref([])
 const timeRanges   = ref([])
 
 const selectedFarm     = ref('')
-const selectedTurbine  = ref('')
+const selectedTurbines = ref([])   // array – supports multi-select
 const selectedFileType = ref('')
 const selectedDateFrom = ref('')
 const selectedDateTo   = ref('')
@@ -474,6 +493,7 @@ const loading          = ref(false)
 const error            = ref('')
 const result           = ref(null)
 const activeTab        = ref('table')
+const turbineDropdownOpen = ref(false)
 
 const globalFilter   = ref('')
 const colFilters     = ref([])
@@ -488,6 +508,13 @@ const availableTurbines = computed(() => {
   if (!selectedFarm.value) return []
   const farm = farms.value.find(f => f.directory === selectedFarm.value)
   return farm?.turbines ?? []
+})
+const turbineDropdownLabel = computed(() => {
+  const sel = selectedTurbines.value
+  if (sel.length === 0) return '— select turbines —'
+  if (sel.length === availableTurbines.value.length) return `All turbines (${sel.length})`
+  if (sel.length === 1) return sel[0]
+  return `${sel.length} turbines selected`
 })
 const availableFileTypes = computed(() => {
   if (!selectedFarm.value) return []
@@ -516,7 +543,7 @@ const maxDateTo = computed(() => {
   const effective = cap < farmMax ? cap : farmMax
   return effective.toISOString().slice(0, 10)
 })
-const canFetch = computed(() => !!(selectedFarm.value && selectedTurbine.value && selectedFileType.value && selectedDateFrom.value))
+const canFetch = computed(() => !!(selectedFarm.value && selectedTurbines.value.length > 0 && selectedFileType.value && selectedDateFrom.value))
 
 const filteredRows = computed(() => {
   if (!result.value) return []
@@ -567,13 +594,15 @@ function jumpTablePage(val) {
 
 // ── Handlers (Query for Data) ──────────────────────────────────────────────
 function onFarmChange() {
-  selectedTurbine.value  = ''
+  selectedTurbines.value = []
   selectedFileType.value = ''
   selectedColumns.value  = []
   result.value           = null
   error.value            = ''
+  turbineDropdownOpen.value = false
   const farm = farms.value.find(f => f.directory === selectedFarm.value)
-  selectedTurbine.value = farm?.turbines?.[0] ?? ''
+  // Default: all turbines selected
+  selectedTurbines.value = farm?.turbines ? [...farm.turbines] : []
   const tr = timeRanges.value.find(t => t.farm === selectedFarm.value)
   selectedDateFrom.value = tr?.earliest ? tr.earliest.slice(0, 10) : ''
   selectedDateTo.value   = selectedDateFrom.value
@@ -617,11 +646,14 @@ function downloadFile() {
 async function fetchData() {
   if (!canFetch.value) return
   loading.value = true; error.value = ''; result.value = null
+  turbineDropdownOpen.value = false
   try {
     const cols   = allColumns.value ? [] : selectedColumns.value
     const dateTo = selectedDateTo.value && selectedDateTo.value !== selectedDateFrom.value ? selectedDateTo.value : null
     result.value = await fetchDayData(
-      selectedFarm.value, selectedDateFrom.value, selectedFileType.value, selectedTurbine.value, cols,
+      selectedFarm.value, selectedDateFrom.value, selectedFileType.value,
+      selectedTurbines.value,   // pass array
+      cols,
       hourFrom.value !== null && hourFrom.value !== '' ? hourFrom.value : null,
       hourTo.value   !== null && hourTo.value   !== '' ? hourTo.value   : null,
       dateTo,
@@ -696,7 +728,7 @@ async function goToDataForEvent(ev) {
 
   selectedFarm.value = evFarm.value
   onFarmChange()
-  selectedTurbine.value  = evTurbine.value
+  selectedTurbines.value = [evTurbine.value]
   selectedFileType.value = 'data'
   selectedDateFrom.value = startDate
   selectedDateTo.value   = startDate
@@ -760,7 +792,7 @@ async function goToDataForCrawlerSlot(slot) {
   if (!turbine) return
   selectedFarm.value = slot.farm
   onFarmChange()
-  selectedTurbine.value  = turbine
+  selectedTurbines.value = slot.turbines_matched?.length ? [...slot.turbines_matched] : [turbine]
   selectedFileType.value = 'data'
   selectedDateFrom.value = slot.date
   selectedDateTo.value   = slot.date
@@ -857,7 +889,7 @@ async function goToDataFromCq(ev, q) {
   const tsEnd   = ev['Timestamp end']
   if (!tsStart) return
   selectedFarm.value = q.farm; onFarmChange()
-  selectedTurbine.value  = q.turbine
+  selectedTurbines.value = [q.turbine]
   selectedFileType.value = 'data'
   selectedDateFrom.value = tsStart.slice(0, 10)
   selectedDateTo.value   = selectedDateFrom.value
@@ -904,6 +936,40 @@ body { font-family: system-ui, -apple-system, sans-serif; font-size: 14px; backg
 .control-group { display: flex; flex-direction: column; gap: 6px; min-width: 180px; }
 .hour-input { max-width: 90px; }
 .control-group label { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: .05em; color: #555; }
+
+/* ── Multi-select turbine dropdown ── */
+.multiselect { position: relative; min-width: 200px; }
+.multiselect--disabled .multiselect-trigger { opacity: .5; cursor: not-allowed; pointer-events: none; }
+.multiselect-trigger {
+  width: 100%; display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px;
+  font-size: 14px; background: #fff; color: #1a1a2e; cursor: pointer; text-align: left;
+  transition: border-color .15s;
+}
+.multiselect-trigger:hover:not(:disabled) { border-color: #4361ee; }
+.multiselect--open .multiselect-trigger { border-color: #4361ee; outline: 2px solid #4361ee; outline-offset: -1px; }
+.multiselect-label { flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.multiselect-arrow { font-size: 11px; color: #888; flex-shrink: 0; transition: transform .15s; }
+.multiselect--open .multiselect-arrow { transform: rotate(180deg); }
+.multiselect-dropdown {
+  position: absolute; top: calc(100% + 4px); left: 0; z-index: 200;
+  background: #fff; border: 1px solid #d0d5dd; border-radius: 8px;
+  box-shadow: 0 6px 20px rgba(0,0,0,.12); min-width: 100%; max-height: 260px;
+  overflow-y: auto; padding: 6px 0;
+}
+.multiselect-actions {
+  display: flex; gap: 6px; padding: 6px 12px 8px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.multiselect-actions button {
+  padding: 3px 10px; font-size: 11px; font-weight: 700; border-radius: 4px;
+  border: 1px solid #d0d5dd; background: #f0f2f5; cursor: pointer; color: #444;
+  transition: background .12s;
+}
+.multiselect-actions button:hover { background: #e0e7ff; border-color: #4361ee; color: #4361ee; }
+.multiselect-option { padding: 5px 12px; border-radius: 0; }
+.multiselect-option:hover { background: #eef1fd; }
+.multiselect-backdrop { position: fixed; inset: 0; z-index: 199; }
 
 select, input[type="date"] { padding: 8px 10px; border: 1px solid #d0d5dd; border-radius: 6px; font-size: 14px; background: #fff; color: #1a1a2e; cursor: pointer; }
 select:focus, input[type="date"]:focus { outline: 2px solid #4361ee; border-color: transparent; }
