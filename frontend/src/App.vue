@@ -257,132 +257,185 @@
       <!-- ══ PAGE: Custom Queries ══ -->
       <template v-if="mainTab === 'custom'">
 
-        <div v-if="cqLoadError" class="card cq-load-error">
-          ⚠️ Could not load <code>custom_queries.json</code>: {{ cqLoadError }}<br/>
-          <small>Make sure the file exists at <code>frontend/public/custom_queries.json</code> and is valid JSON.</small>
+        <!-- ── Sub-tab bar ── -->
+        <div class="tab-bar cq-subtab-bar">
+          <button class="tab-btn" :class="{ active: cqSubTab === 'queries' }" @click="cqSubTab = 'queries'">📋 Saved Queries</button>
+          <button class="tab-btn" :class="{ active: cqSubTab === 'findings' }" @click="cqSubTab = 'findings'">
+            🕷️ Crawler Findings
+            <span v-if="crawlerResults" class="cq-badge-count">{{ crawlerResults.total_slots }}</span>
+          </button>
         </div>
 
-        <div v-else-if="customQueries.length === 0" class="card cq-load-error">
-          No queries defined yet. Edit <code>frontend/public/custom_queries.json</code> to add some.
-        </div>
+        <!-- ── Sub-page: Saved Queries ── -->
+        <template v-if="cqSubTab === 'queries'">
+          <div v-if="cqLoadError" class="card cq-load-error">
+            ⚠️ Could not load <code>custom_queries.json</code>: {{ cqLoadError }}<br/>
+            <small>Make sure the file exists at <code>frontend/public/custom_queries.json</code> and is valid JSON.</small>
+          </div>
 
-        <div v-else class="cq-grid">
-          <div
-            v-for="q in customQueries"
-            :key="q.id"
-            class="cq-card"
-            :class="{ 'cq-card--active': cqActiveId === q.id }"
-          >
-            <!-- Card header -->
-            <div class="cq-card-header">
-              <span :class="['cq-type-badge', q.type === 'data' ? 'cq-badge-data' : 'cq-badge-events']">
-                {{ q.type === 'data' ? '📊 Data' : '📅 Events' }}
-              </span>
-              <span class="cq-farm-tag">{{ q.farm }} / {{ q.turbine }}</span>
-            </div>
+          <div v-else-if="customQueries.length === 0" class="card cq-load-error">
+            No queries defined yet. Edit <code>frontend/public/custom_queries.json</code> to add some.
+          </div>
 
-            <!-- Card body -->
-            <div class="cq-card-body">
-              <h3 class="cq-title">{{ q.name }}</h3>
-              <p class="cq-desc">{{ q.description }}</p>
-
-              <!-- Query detail chips -->
-              <div class="cq-chips">
+          <div v-else class="cq-grid">
+            <div
+              v-for="q in customQueries"
+              :key="q.id"
+              class="cq-card"
+              :class="{ 'cq-card--active': cqActiveId === q.id }"
+            >
+              <div class="cq-card-header">
+                <span :class="['cq-type-badge', q.type === 'data' ? 'cq-badge-data' : 'cq-badge-events']">
+                  {{ q.type === 'data' ? '📊 Data' : '📅 Events' }}
+                </span>
+                <span class="cq-farm-tag">{{ q.farm }} / {{ q.turbine }}</span>
+              </div>
+              <div class="cq-card-body">
+                <h3 class="cq-title">{{ q.name }}</h3>
+                <p class="cq-desc">{{ q.description }}</p>
+                <div class="cq-chips">
+                  <template v-if="q.type === 'data'">
+                    <span class="chip">📅 {{ q.date }}</span>
+                    <span v-if="q.file_type" class="chip">{{ q.file_type }}</span>
+                    <span v-if="q.hour_from != null || q.hour_to != null" class="chip">⏰ {{ q.hour_from ?? 0 }}h – {{ q.hour_to ?? 23 }}h</span>
+                    <span v-if="q.columns && q.columns.length" class="chip">{{ q.columns.length }} columns</span>
+                    <span v-else class="chip">all columns</span>
+                  </template>
+                  <template v-else>
+                    <span v-if="q.iec_category" class="chip">{{ q.iec_category }}</span>
+                    <span v-if="q.status" class="chip">Status: {{ q.status }}</span>
+                    <span class="chip">limit {{ q.limit ?? 500 }}</span>
+                  </template>
+                </div>
+              </div>
+              <div class="cq-card-footer">
+                <button class="btn-primary cq-run-btn" :disabled="cqLoadingId === q.id" @click="runCustomQuery(q)">
+                  <span v-if="cqLoadingId === q.id">⏳ Running…</span>
+                  <span v-else>▶ Run Query</span>
+                </button>
+                <span v-if="cqErrors[q.id]" class="error-msg">{{ cqErrors[q.id] }}</span>
+              </div>
+              <div v-if="cqActiveId === q.id && cqResults[q.id]" class="cq-results">
                 <template v-if="q.type === 'data'">
-                  <span class="chip">📅 {{ q.date }}</span>
-                  <span v-if="q.file_type" class="chip">{{ q.file_type }}</span>
-                  <span v-if="q.hour_from != null || q.hour_to != null" class="chip">
-                    ⏰ {{ q.hour_from ?? 0 }}h – {{ q.hour_to ?? 23 }}h
-                  </span>
-                  <span v-if="q.columns && q.columns.length" class="chip">{{ q.columns.length }} columns</span>
-                  <span v-else class="chip">all columns</span>
+                  <div class="cq-results-header">
+                    <span class="row-count">{{ cqResults[q.id].row_count ?? cqResults[q.id].rows?.length ?? 0 }} rows</span>
+                    <div class="download-group">
+                      <select v-model="cqDownloadFmt[q.id]" class="download-format-select"><option value="csv">CSV</option><option value="json">JSON</option></select>
+                      <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
+                    </div>
+                  </div>
+                  <div class="table-scroll">
+                    <table>
+                      <thead><tr><th v-for="col in cqResults[q.id].columns" :key="col">{{ col }}</th></tr></thead>
+                      <tbody>
+                        <tr v-for="(row, i) in cqResults[q.id].rows.slice(0, 200)" :key="i">
+                          <td v-for="(cell, j) in row" :key="j">{{ cell ?? '—' }}</td>
+                        </tr>
+                        <tr v-if="cqResults[q.id].rows.length > 200">
+                          <td :colspan="cqResults[q.id].columns.length" class="no-rows">… {{ cqResults[q.id].rows.length - 200 }} more rows (download to see all)</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </template>
                 <template v-else>
-                  <span v-if="q.iec_category" class="chip">{{ q.iec_category }}</span>
-                  <span v-if="q.status" class="chip">Status: {{ q.status }}</span>
-                  <span class="chip">limit {{ q.limit ?? 500 }}</span>
+                  <div class="cq-results-header">
+                    <span class="row-count">{{ cqResults[q.id].count }} events</span>
+                    <div class="download-group">
+                      <select v-model="cqDownloadFmt[q.id]" class="download-format-select"><option value="csv">CSV</option><option value="json">JSON</option></select>
+                      <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
+                    </div>
+                  </div>
+                  <div class="table-scroll">
+                    <table>
+                      <thead><tr><th v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ col }}</th><th>Action</th></tr></thead>
+                      <tbody>
+                        <tr v-for="(ev, i) in cqResults[q.id].events" :key="i">
+                          <td v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ ev[col] ?? '—' }}</td>
+                          <td><a class="ev-link" href="#" @click.prevent="goToDataFromCq(ev, q)">→ View Data</a></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
                 </template>
               </div>
             </div>
+          </div>
+        </template>
 
-            <!-- Run button -->
-            <div class="cq-card-footer">
+        <!-- ── Sub-page: Crawler Findings ── -->
+        <template v-else-if="cqSubTab === 'findings'">
+          <div v-if="crLoadError" class="card cq-load-error">
+            ⚠️ Could not load crawler results: {{ crLoadError }}
+            <br/><small>Run <code>python scripts/export_crawler_results.py</code> to generate <code>frontend/public/crawler_results.json</code>.</small>
+          </div>
+          <div v-else-if="!crawlerResults" class="card cq-load-error" style="color:#666;">⏳ Loading crawler findings…</div>
+
+          <template v-else>
+            <!-- Pattern selector -->
+            <div class="cr-pattern-tabs">
               <button
-                class="btn-primary cq-run-btn"
-                :disabled="cqLoadingId === q.id"
-                @click="runCustomQuery(q)"
+                v-for="(pmeta, pkey) in crawlerResults.patterns"
+                :key="pkey"
+                class="cr-pattern-btn"
+                :class="{ active: crActivePattern === pkey }"
+                @click="crActivePattern = pkey"
               >
-                <span v-if="cqLoadingId === q.id">⏳ Running…</span>
-                <span v-else>▶ Run Query</span>
+                {{ pmeta.icon }} {{ pmeta.label }}
+                <span class="cr-count-badge">{{ pmeta.count }}</span>
               </button>
-              <span v-if="cqErrors[q.id]" class="error-msg">{{ cqErrors[q.id] }}</span>
             </div>
 
-            <!-- Inline results -->
-            <div v-if="cqActiveId === q.id && cqResults[q.id]" class="cq-results">
-              <template v-if="q.type === 'data'">
-                <div class="cq-results-header">
-                  <span class="row-count">{{ cqResults[q.id].row_count ?? cqResults[q.id].rows?.length ?? 0 }} rows</span>
-                  <div class="download-group">
-                    <select v-model="cqDownloadFmt[q.id]" class="download-format-select">
-                      <option value="csv">CSV</option><option value="json">JSON</option>
-                    </select>
-                    <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
+            <template v-if="crActivePattern && crawlerResults.patterns[crActivePattern]">
+              <!-- Pattern description -->
+              <div class="card cr-desc-card">
+                <div class="cr-desc-header">
+                  <span class="cr-icon">{{ crawlerResults.patterns[crActivePattern].icon }}</span>
+                  <div>
+                    <h3 class="cr-pattern-title">{{ crawlerResults.patterns[crActivePattern].label }}</h3>
+                    <p class="cr-pattern-desc">{{ crawlerResults.patterns[crActivePattern].description }}</p>
                   </div>
+                  <span class="row-count" style="margin-left:auto;">{{ crawlerResults.patterns[crActivePattern].count }} hours found</span>
                 </div>
-                <div class="table-scroll">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th v-for="col in cqResults[q.id].columns" :key="col">{{ col }}</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr v-for="(row, i) in cqResults[q.id].rows.slice(0, 200)" :key="i">
-                        <td v-for="(cell, j) in row" :key="j">{{ cell ?? '—' }}</td>
-                      </tr>
-                      <tr v-if="cqResults[q.id].rows.length > 200">
-                        <td :colspan="cqResults[q.id].columns.length" class="no-rows">
-                          … {{ cqResults[q.id].rows.length - 200 }} more rows (download to see all)
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-              </template>
+              </div>
 
-              <template v-else>
-                <div class="cq-results-header">
-                  <span class="row-count">{{ cqResults[q.id].count }} events</span>
-                  <div class="download-group">
-                    <select v-model="cqDownloadFmt[q.id]" class="download-format-select">
-                      <option value="csv">CSV</option><option value="json">JSON</option>
-                    </select>
-                    <button class="btn-download" @click="downloadCqResult(q)">⬇ Download</button>
-                  </div>
-                </div>
-                <div class="table-scroll">
+              <!-- Slots table -->
+              <div class="card" style="padding:0; overflow:hidden;">
+                <div class="table-scroll" style="max-height:600px;">
                   <table>
                     <thead>
                       <tr>
-                        <th v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ col }}</th>
+                        <th>Date</th>
+                        <th>Hour (UTC)</th>
+                        <th>Turbines</th>
+                        <th v-for="col in crMeasurementCols(crActivePattern)" :key="col">{{ col }}</th>
                         <th>Action</th>
                       </tr>
                     </thead>
                     <tbody>
-                      <tr v-for="(ev, i) in cqResults[q.id].events" :key="i">
-                        <td v-for="col in cqEvDisplayCols(q.id)" :key="col">{{ ev[col] ?? '—' }}</td>
+                      <tr v-for="(slot, i) in crawlerResults.patterns[crActivePattern].slots" :key="i">
+                        <td>{{ slot.date }}</td>
+                        <td>{{ slot.hour }}:00 – {{ slot.hour }}:59</td>
                         <td>
-                          <a class="ev-link" href="#" @click.prevent="goToDataFromCq(ev, q)">→ View Data</a>
+                          <span class="cr-turbine-pills">
+                            <span v-for="t in slot.turbines_matched" :key="t" class="cr-turbine-pill">{{ t }}</span>
+                          </span>
+                        </td>
+                        <td v-for="col in crMeasurementCols(crActivePattern)" :key="col">
+                          {{ crSlotValue(slot, col) }}
+                        </td>
+                        <td>
+                          <a class="ev-link" href="#" @click.prevent="goToDataForCrawlerSlot(slot)">→ View Data</a>
                         </td>
                       </tr>
                     </tbody>
                   </table>
                 </div>
-              </template>
-            </div>
-          </div>
-        </div>
+              </div>
+            </template>
+          </template>
+        </template>
+
       </template>
 
     </main>
@@ -631,11 +684,65 @@ async function goToDataForEvent(ev) {
 // ── Custom Queries tab state ───────────────────────────────────────────────
 const customQueries  = ref([])
 const cqLoadError    = ref('')
-const cqLoadingId    = ref(null)   // id of the query currently running
-const cqActiveId     = ref(null)   // id of the query whose results are shown
-const cqResults      = ref({})     // id → API response
-const cqErrors       = ref({})     // id → error string
-const cqDownloadFmt  = ref({})     // id → 'csv' | 'json'
+const cqLoadingId    = ref(null)
+const cqActiveId     = ref(null)
+const cqResults      = ref({})
+const cqErrors       = ref({})
+const cqDownloadFmt  = ref({})
+const cqSubTab       = ref('queries')   // 'queries' | 'findings'
+
+// ── Crawler Findings state ─────────────────────────────────────────────────
+const crawlerResults  = ref(null)
+const crLoadError     = ref('')
+const crActivePattern = ref(null)
+
+async function loadCrawlerResults() {
+  try {
+    const res = await fetch('/crawler_results.json')
+    if (!res.ok) throw new Error(`HTTP ${res.status}`)
+    crawlerResults.value = await res.json()
+    // auto-select first pattern
+    const keys = Object.keys(crawlerResults.value.patterns ?? {})
+    if (keys.length) crActivePattern.value = keys[0]
+  } catch (e) {
+    crLoadError.value = e.message
+  }
+}
+
+/** Return the first turbine's measurement keys for column headers */
+function crMeasurementCols(patternKey) {
+  const slots = crawlerResults.value?.patterns?.[patternKey]?.slots ?? []
+  if (!slots.length) return []
+  const firstSlot = slots[0]
+  const firstTurbine = Object.values(firstSlot.details_by_turbine ?? {})[0] ?? {}
+  return Object.keys(firstTurbine)
+}
+
+/** Get a readable summary value for a slot column – mean across all matched turbines */
+function crSlotValue(slot, col) {
+  const details = slot.details_by_turbine ?? {}
+  const vals = Object.values(details).map(d => d[col]).filter(v => v != null && !isNaN(v))
+  if (!vals.length) return '—'
+  const avg = vals.reduce((a, b) => a + b, 0) / vals.length
+  return avg.toFixed(2)
+}
+
+async function goToDataForCrawlerSlot(slot) {
+  const turbine = (slot.turbines_matched ?? [])[0]
+  if (!turbine) return
+  selectedFarm.value = slot.farm
+  onFarmChange()
+  selectedTurbine.value  = turbine
+  selectedFileType.value = 'data'
+  selectedDate.value     = slot.date
+  hourFrom.value         = slot.hour
+  hourTo.value           = slot.hour
+  allColumns.value       = true
+  selectedColumns.value  = []
+  mainTab.value = 'query'
+  await new Promise(r => setTimeout(r, 50))
+  await fetchData()
+}
 
 async function loadCustomQueries() {
   try {
@@ -737,7 +844,7 @@ onMounted(async () => {
     const [farmsData, colsData, rangesData] = await Promise.all([fetchWindFarms(), fetchColumns(), fetchTimeRanges()])
     farms.value = farmsData; columnsMap.value = colsData; timeRanges.value = rangesData
   } catch (e) { error.value = `Could not load farm metadata: ${e.message}` }
-  await loadCustomQueries()
+  await Promise.all([loadCustomQueries(), loadCrawlerResults()])
 })
 </script>
 
@@ -880,6 +987,31 @@ td:last-child { border-right: none; }
 .cq-run-btn { padding: 8px 20px; font-size: 13px; }
 .cq-results { border-top: 2px solid #4361ee; padding: 14px 16px; background: #fafbff; }
 .cq-results-header { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+
+/* ── Crawler Findings ── */
+.cq-subtab-bar { margin-bottom: 16px; }
+.cq-badge-count { display: inline-block; background: #4361ee; color: #fff; font-size: 10px; font-weight: 700; border-radius: 20px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+
+.cr-pattern-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.cr-pattern-btn {
+  display: flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1.5px solid #d0d5dd; border-radius: 8px;
+  background: #fff; font-size: 13px; font-weight: 600; cursor: pointer; color: #555;
+  transition: border-color .15s, color .15s, background .15s;
+}
+.cr-pattern-btn:hover { border-color: #4361ee; color: #4361ee; background: #eef1fd; }
+.cr-pattern-btn.active { border-color: #4361ee; background: #4361ee; color: #fff; }
+.cr-pattern-btn.active .cr-count-badge { background: rgba(255,255,255,.3); color: #fff; }
+.cr-count-badge { font-size: 11px; font-weight: 700; background: #f0f2f5; color: #444; border-radius: 12px; padding: 1px 8px; }
+
+.cr-desc-card { padding: 14px 18px !important; }
+.cr-desc-header { display: flex; align-items: flex-start; gap: 14px; }
+.cr-icon { font-size: 28px; line-height: 1; flex-shrink: 0; }
+.cr-pattern-title { font-size: 15px; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+.cr-pattern-desc { font-size: 13px; color: #666; line-height: 1.5; }
+
+.cr-turbine-pills { display: flex; flex-wrap: wrap; gap: 3px; }
+.cr-turbine-pill { font-size: 10px; background: #e0e7ff; color: #3730a3; border-radius: 4px; padding: 1px 5px; font-weight: 600; white-space: nowrap; }
 
 </style>
 
