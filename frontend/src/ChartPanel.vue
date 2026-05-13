@@ -99,7 +99,7 @@
         class="chart-card"
       >
         <div class="chart-card-title">{{ col }}</div>
-        <div class="chart-wrap">
+        <div class="chart-wrap" :style="isMultiTurbine ? 'height:280px' : 'height:220px'">
           <component
             :is="chartComponent"
             :data="chartDataMap[col]"
@@ -147,10 +147,12 @@ const props = defineProps({
 })
 
 // ── Local state ────────────────────────────────────────────────────────────
-const selectedCols = ref([])
-const chartType    = ref('line')
-const pageSize     = ref(50)
-const currentPage  = ref(0)
+const selectedCols   = ref([])
+const chartType      = ref('line')
+const pageSize       = ref(50)
+const currentPage    = ref(0)
+/** Turbine names currently hidden — shared across all charts */
+const hiddenTurbines = ref(new Set())
 
 const chartTypes = [
   { value: 'line', label: '📈 Line' },
@@ -224,7 +226,7 @@ function jumpToPage(val) {
   if (!isNaN(n)) currentPage.value = Math.max(0, Math.min(totalPages.value - 1, n - 1))
 }
 
-watch(() => props.result, () => { currentPage.value = 0 })
+watch(() => props.result, () => { currentPage.value = 0; hiddenTurbines.value = new Set() })
 
 // ── X-axis labels ──────────────────────────────────────────────────────────
 /** Single-turbine: one label per row. Multi-turbine: unique timestamps only. */
@@ -260,11 +262,13 @@ const numericColumns = computed(() => {
 // ── Chart component ────────────────────────────────────────────────────────
 const chartComponent = computed(() => chartType.value === 'bar' ? Bar : Line)
 
-// ── Palette ────────────────────────────────────────────────────────────────
+// ── Palette + shapes ───────────────────────────────────────────────────────
 const PALETTE = [
   '#4361ee', '#e63946', '#2ec4b6', '#f4a261', '#8338ec',
   '#06d6a0', '#ef476f', '#ffd166', '#118ab2', '#073b4c',
 ]
+// Distinct point shapes so turbines are distinguishable without relying on colour alone
+const SHAPES = ['circle', 'triangle', 'rect', 'star', 'crossRot', 'rectRot', 'cross', 'dash']
 
 // ── Chart builders ─────────────────────────────────────────────────────────
 function parseVal(v) {
@@ -305,6 +309,7 @@ function buildChartData(col) {
 
   const datasets = turbines.map((turbine, ti) => {
     const colour = PALETTE[ti % PALETTE.length]
+    const shape  = SHAPES[ti % SHAPES.length]
     // Map ts-label → value for this turbine on this page
     const tsMap = {}
     for (const row of pageRows.value) {
@@ -313,16 +318,20 @@ function buildChartData(col) {
       }
     }
     const data = lbArr.map(lbl => tsMap[lbl] ?? null)
+    const nPoints = lbArr.length
     return {
-      label:           turbine,
+      label:            turbine,
+      hidden:           hiddenTurbines.value.has(turbine),
       data,
-      borderColor:     colour,
-      backgroundColor: chartType.value === 'bar' ? colour + '99' : 'transparent',
-      borderWidth:     chartType.value === 'bar' ? 1 : 1.5,
-      pointRadius:     chartType.value === 'line' && lbArr.length < 200 ? 2 : 0,
-      fill:            false,
-      tension:         0.3,
-      spanGaps:        true,
+      borderColor:      colour,
+      backgroundColor:  chartType.value === 'bar' ? colour + '99' : 'transparent',
+      borderWidth:      chartType.value === 'bar' ? 1 : 1.5,
+      pointStyle:       shape,
+      pointRadius:      chartType.value === 'line' && nPoints < 200 ? 4 : 0,
+      pointHoverRadius: 6,
+      fill:             false,
+      tension:          0.3,
+      spanGaps:         true,
     }
   })
 
@@ -335,10 +344,22 @@ function buildChartOptions(col) {
     maintainAspectRatio: false,
     animation:           false,
     plugins: {
-      legend:  {
+      legend: {
         display:  isMultiTurbine.value,
         position: 'top',
-        labels:   { boxWidth: 12, font: { size: 11 } },
+        labels:   {
+          boxWidth:      14,
+          usePointStyle: true,   // legend icons match the point shape
+          font:          { size: 11 },
+        },
+        onClick(_event, legendItem) {
+          // Toggle in the shared set → triggers recompute for ALL charts
+          const turbine = legendItem.text
+          const next = new Set(hiddenTurbines.value)
+          if (next.has(turbine)) next.delete(turbine)
+          else next.add(turbine)
+          hiddenTurbines.value = next   // new reference → Vue reactivity fires
+        },
       },
       title:   { display: false },
       tooltip: { mode: 'index', intersect: false },
