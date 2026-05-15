@@ -17,6 +17,28 @@ Drop this repo on each Pi, run `install.sh` once, and collection starts automati
 
 ---
 
+## Updating an existing Pi
+
+```bash
+cd ~/winddataAPI
+bash runners/update.sh
+```
+
+That's it. The script:
+1. `git pull` — fetches the latest code from `main`
+2. Re-installs/upgrades Python deps in the existing venv
+3. Prints the new commit hash
+4. Reminds you of any new `.env` variables to set
+
+**No crontab changes needed** — cron already points to the same script paths.
+
+If new env vars were added (e.g. `GRAFANA_LOKI_INSTANCE_ID`), add them to `runners/.env`:
+```bash
+nano ~/winddataAPI/runners/.env
+```
+
+---
+
 ## Setup on each Pi (once)
 
 ```bash
