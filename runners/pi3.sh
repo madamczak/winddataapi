@@ -3,10 +3,14 @@
 # pi3.sh — Raspberry Pi 3 crawler runner
 #
 # Patterns assigned to this Pi:
-#   • blade_rpm_15    (kelmarsh, turbines 2-6)  – blade RPM ~15 across the farm
-#     Note: turbine_1 excluded — its SCADA stores RPM in a different column
-#   • low_wind_cutin  (kelmarsh)                – cut-in wind speed region
-#   • high_nacelle_temp (kelmarsh)              – thermal stress event
+#   • blade_rpm_15    (kelmarsh turbines 2-6, penmanshiel all)
+#   • low_wind_cutin  (kelmarsh + penmanshiel)
+#   • high_nacelle_temp (kelmarsh + penmanshiel)
+#
+# Note: kelmarsh turbine_1 excluded from blade_rpm_15 — its SCADA labels for
+#       RPM columns are swapped vs all other turbines and neither column falls
+#       in the expected blade-RPM physical range [5, 25].
+#       With the 70% threshold this exclusion is optional, but kept for clarity.
 #
 # Manual run:
 #   WINDDATA_API=https://your-api.onrender.com bash runners/pi3.sh
@@ -56,11 +60,11 @@ echo "======================================" | tee -a "$LOG_FILE"
 echo "$(date -u +%FT%TZ)  [pi3] Starting — seed=$SEED  api=$API" \
     | tee -a "$LOG_FILE"
 
-# turbine_1 excluded for blade_rpm_15 (SCADA labelling inconsistency — see README)
-echo "$(date -u +%FT%TZ)  [pi3] Running: blade_rpm_15 (turbines 2-6)" | tee -a "$LOG_FILE"
+# turbine_1 excluded for blade_rpm_15 on kelmarsh (SCADA labelling inconsistency — see README)
+echo "$(date -u +%FT%TZ)  [pi3] Running: blade_rpm_15 (kelmarsh, turbines 2-6)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         kelmarsh \
     --pattern      blade_rpm_15 \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
@@ -69,10 +73,21 @@ echo "$(date -u +%FT%TZ)  [pi3] Running: blade_rpm_15 (turbines 2-6)" | tee -a "
     --turbines     turbine_2 turbine_3 turbine_4 turbine_5 turbine_6 \
     2>&1 | tee -a "$LOG_FILE"
 
-echo "$(date -u +%FT%TZ)  [pi3] Running: low_wind_cutin" | tee -a "$LOG_FILE"
+echo "$(date -u +%FT%TZ)  [pi3] Running: blade_rpm_15 (penmanshiel)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         penmanshiel \
+    --pattern      blade_rpm_15 \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 500000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+echo "$(date -u +%FT%TZ)  [pi3] Running: low_wind_cutin (kelmarsh)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         kelmarsh \
     --pattern      low_wind_cutin \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
@@ -80,15 +95,37 @@ echo "$(date -u +%FT%TZ)  [pi3] Running: low_wind_cutin" | tee -a "$LOG_FILE"
     --seed         $((SEED + 1000000)) \
     2>&1 | tee -a "$LOG_FILE"
 
-echo "$(date -u +%FT%TZ)  [pi3] Running: high_nacelle_temp" | tee -a "$LOG_FILE"
+echo "$(date -u +%FT%TZ)  [pi3] Running: low_wind_cutin (penmanshiel)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         penmanshiel \
+    --pattern      low_wind_cutin \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 1500000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+echo "$(date -u +%FT%TZ)  [pi3] Running: high_nacelle_temp (kelmarsh)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         kelmarsh \
     --pattern      high_nacelle_temp \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
     --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 2000000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+echo "$(date -u +%FT%TZ)  [pi3] Running: high_nacelle_temp (penmanshiel)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         penmanshiel \
+    --pattern      high_nacelle_temp \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 2500000)) \
     2>&1 | tee -a "$LOG_FILE"
 
 echo "$(date -u +%FT%TZ)  [pi3] Done." | tee -a "$LOG_FILE"

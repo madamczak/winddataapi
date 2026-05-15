@@ -42,8 +42,11 @@ import requests
 # ── resolve patterns module whether run as script or module ──────────────────
 sys.path.insert(0, str(Path(__file__).parent))
 from patterns import PATTERNS
+from loki_logger import get_loki_logger
 
 # ── Logging setup ─────────────────────────────────────────────────────────────
+# A logger with Loki support is built later in crawl() once we know farm/pattern.
+# This module-level logger is used only for pre-crawl CLI output.
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s  %(levelname)-7s  %(message)s",
@@ -291,6 +294,8 @@ def crawl(
     turbine_delay: float,
     seed: Optional[int],
     turbines_filter: Optional[list[str]],
+    pi: str = "",
+    min_match_ratio: float = 0.7,
 ) -> None:
     if pattern_name not in PATTERNS:
         log.error(f"Unknown pattern '{pattern_name}'. "
@@ -298,13 +303,25 @@ def crawl(
         sys.exit(1)
 
     pattern = PATTERNS[pattern_name]
-    log.info(f"Pattern : {pattern_name}")
-    log.info(f"Desc    : {pattern['description']}")
-    log.info(f"Farm    : {farm}")
-    log.info(f"API     : {api_base}")
-    log.info(f"Output  : {output_path}")
-    log.info(f"Samples : {iterations}")
-    log.info(f"Delay   : {delay} s between slots / {turbine_delay} s between turbine checks")
+
+    # Replace module-level logger with a Loki-aware one that includes
+    # farm / pattern / pi as Loki stream labels for Grafana filtering.
+    global log
+    log = get_loki_logger(
+        "apicrawler",
+        farm=farm,
+        pattern=pattern_name,
+        pi=pi,
+    )
+
+    log.info(f"Pattern   : {pattern_name}")
+    log.info(f"Desc      : {pattern['description']}")
+    log.info(f"Farm      : {farm}")
+    log.info(f"API       : {api_base}")
+    log.info(f"Output    : {output_path}")
+    log.info(f"Samples   : {iterations}")
+    log.info(f"Threshold : ≥{min_match_ratio:.0%} of turbines must match")
+    log.info(f"Delay     : {delay} s between slots / {turbine_delay} s between turbine checks")
 
     if seed is not None:
         random.seed(seed)
@@ -337,6 +354,10 @@ def crawl(
     matches   = 0
     skipped   = 0
 
+    # Minimum number of turbines that must pass (ceil so 0.7 * 6 → 5, 0.7 * 15 → 11)
+    n_total = len(turbines)
+    n_need  = math.ceil(min_match_ratio * n_total)
+
     # ── Sampling loop ─────────────────────────────────────────────────────────
     for i in range(1, iterations + 1):
         # Pick a random date and hour
@@ -347,75 +368,73 @@ def crawl(
 
         checked += 1
         log.info(f"[{i:>{len(str(iterations))}}/{iterations}]  "
-                 f"{date_str} h{sample_h:02d}  — checking {turbines[0]} first…")
+                 f"{date_str} h{sample_h:02d}  — checking {n_total} turbines "
+                 f"(need ≥{n_need}/{n_total} = {min_match_ratio:.0%})…")
 
-        # ── Check first turbine ───────────────────────────────────────────────
-        first_data = fetch_hour_data(
-            session, api_base, farm, turbines[0], date_str, sample_h, columns)
+        # ── Check all turbines, fail-fast when threshold is unreachable ───────
+        turbine_results: dict[str, tuple[bool, dict]] = {}
+        n_passed = 0
+        api_error = False
 
-        if first_data is None:
-            log.warning(f"  ✗ API error for {turbines[0]} — skipping slot")
-            skipped += 1
-            if delay:
-                time.sleep(delay)          # slot delay — wait before next random slot
-            continue
+        for turbine in turbines:
+            if turbine_delay and turbine_results:   # delay only between calls
+                time.sleep(turbine_delay)
 
-        passed, details = evaluate_pattern(first_data, pattern)
-        if not passed:
-            reason = details.pop("reason", "—")
-            log.debug(f"  ✗ {turbines[0]} failed: {reason}")
-            if delay:
-                time.sleep(delay)          # slot delay — first turbine failed, move on
-            continue
-
-        log.info(f"  ✓ {turbines[0]} matches — checking remaining {len(turbines)-1} turbines…")
-
-        # ── Check all remaining turbines ──────────────────────────────────────
-        all_turbine_details: dict[str, dict] = {turbines[0]: details}
-        all_passed = True
-
-        for turbine in turbines[1:]:
-            if turbine_delay:
-                time.sleep(turbine_delay)  # short delay — within a promising slot
             t_data = fetch_hour_data(
                 session, api_base, farm, turbine, date_str, sample_h, columns)
 
             if t_data is None:
-                log.warning(f"  ✗ API error for {turbine} — aborting slot")
-                all_passed = False
+                log.warning(f"  ✗ API error for {turbine}")
+                turbine_results[turbine] = (False, {"reason": "API error"})
+                api_error = True
+            else:
+                t_passed, t_details = evaluate_pattern(t_data, pattern)
+                turbine_results[turbine] = (t_passed, t_details)
+                if t_passed:
+                    n_passed += 1
+                    log.info(f"  ✓ {turbine} matches  [{n_passed} passed so far]")
+                else:
+                    reason = t_details.pop("reason", "—")
+                    log.debug(f"  ✗ {turbine} failed: {reason}")
+
+            # Fail-fast: even if every remaining turbine passes, can we hit n_need?
+            n_checked  = len(turbine_results)
+            remaining  = n_total - n_checked
+            max_possible = n_passed + remaining
+            if max_possible < n_need:
+                log.debug(f"  Early exit: best possible {max_possible}/{n_total} < need {n_need}")
                 break
 
-            t_passed, t_details = evaluate_pattern(t_data, pattern)
-            if not t_passed:
-                reason = t_details.pop("reason", "—")
-                log.info(f"  ✗ {turbine} failed: {reason}")
-                all_passed = False
-                break
+        if api_error and n_passed == 0:
+            skipped += 1
 
-            log.info(f"  ✓ {turbine} matches")
-            all_turbine_details[turbine] = t_details
-
-        if not all_passed:
-            if delay:
-                time.sleep(delay)          # slot delay — partial match, move on
-            continue
-
-        # ── All turbines match! ───────────────────────────────────────────────
-        matches += 1
-        record = {
-            "pattern":          pattern_name,
-            "farm":             farm,
-            "date":             date_str,
-            "hour":             sample_h,
-            "turbines_matched": turbines,
-            "details_by_turbine": all_turbine_details,
-            "timestamp_utc":    time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        }
-        save_match(output_path, record)
-        log.info(
-            f"  🎯 MATCH #{matches}  →  {date_str} h{sample_h:02d}  "
-            f"(saved to {output_path})"
-        )
+        match_ratio = n_passed / n_total
+        if match_ratio >= min_match_ratio:
+            # ── Enough turbines match! ────────────────────────────────────────
+            matches += 1
+            matched_turbines = [t for t, (p, _) in turbine_results.items() if p]
+            failed_turbines  = [t for t, (p, _) in turbine_results.items() if not p]
+            all_turbine_details = {t: d for t, (p, d) in turbine_results.items() if p}
+            record = {
+                "pattern":            pattern_name,
+                "farm":               farm,
+                "date":               date_str,
+                "hour":               sample_h,
+                "turbines_matched":   matched_turbines,
+                "turbines_failed":    failed_turbines,
+                "turbines_total":     n_total,
+                "match_ratio":        round(match_ratio, 3),
+                "details_by_turbine": all_turbine_details,
+                "timestamp_utc":      time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            }
+            save_match(output_path, record)
+            log.info(
+                f"  🎯 MATCH #{matches}  →  {date_str} h{sample_h:02d}  "
+                f"({n_passed}/{n_total} = {match_ratio:.0%} turbines)  "
+                f"(saved to {output_path})"
+            )
+        else:
+            log.debug(f"  Slot rejected: {n_passed}/{n_total} = {match_ratio:.0%} < {min_match_ratio:.0%}")
 
         if delay:
             time.sleep(delay)
@@ -500,6 +519,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="Random seed for reproducible sampling (default: random)",
     )
     p.add_argument(
+        "--pi",
+        default=os.environ.get("PI_ID", ""),
+        metavar="ID",
+        help="Identifier for this Pi/runner instance, attached as a Loki label "
+             "(default: $PI_ID env var or empty)",
+    )
+    p.add_argument(
+        "--min-match-ratio",
+        type=float,
+        default=0.7,
+        metavar="RATIO",
+        dest="min_match_ratio",
+        help="Fraction of turbines that must satisfy the pattern for a slot to be "
+             "recorded as a match (default: 0.7 = 70%%). "
+             "Use 1.0 to require all turbines (old behaviour).",
+    )
+    p.add_argument(
         "--verbose", "-v",
         action="store_true",
         help="Enable DEBUG-level logging (shows every rejection reason)",
@@ -547,6 +583,8 @@ def main() -> None:
         turbine_delay   = args.turbine_delay,
         seed            = args.seed,
         turbines_filter = args.turbines,
+        pi              = args.pi,
+        min_match_ratio = args.min_match_ratio,
     )
 
 

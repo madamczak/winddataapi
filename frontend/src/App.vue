@@ -492,7 +492,7 @@ const hourTo           = ref(null)
 const loading          = ref(false)
 const error            = ref('')
 const result           = ref(null)
-const activeTab        = ref('table')
+const activeTab        = ref('charts')
 const turbineDropdownOpen = ref(false)
 
 const globalFilter   = ref('')
@@ -659,7 +659,7 @@ async function fetchData() {
       dateTo,
     )
     globalFilter.value = ''; colFilters.value = Array(result.value.columns.length).fill('')
-    sortCol.value = null; sortDir.value = 1; tablePage.value = 0; activeTab.value = 'table'
+    sortCol.value = null; sortDir.value = 1; tablePage.value = 0; activeTab.value = 'charts'
   } catch (e) { error.value = e.message }
   finally { loading.value = false }
 }

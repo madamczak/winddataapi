@@ -9,22 +9,28 @@
 
     <!-- ── Controls row ─────────────────────────────────────────────── -->
     <div class="chart-controls">
-      <!-- Column selector: only numeric columns are listed -->
-      <div class="chart-control-group">
-        <label class="chart-label">Columns to plot</label>
-        <div class="chart-col-list">
-          <label
+      <!-- Column selector: collapsible pill-toggle buttons -->
+      <div class="chart-control-group chart-control-group--cols">
+        <div class="chart-label-row">
+          <button type="button" class="cols-toggle" @click="colsOpen = !colsOpen">
+            <span class="cols-toggle-arrow" :class="{ open: colsOpen }">▶</span>
+            <span class="chart-label">Columns to plot</span>
+            <span class="cols-summary">{{ selectedCols.length }} / {{ numericColumns.length }} selected</span>
+          </button>
+          <div class="col-quick-btns" v-show="colsOpen">
+            <button type="button" class="col-quick-btn" @click.stop="selectedCols = [...numericColumns]">All</button>
+            <button type="button" class="col-quick-btn" @click.stop="selectedCols = []">None</button>
+          </div>
+        </div>
+        <div class="chart-pill-list" v-show="colsOpen">
+          <button
             v-for="col in numericColumns"
             :key="col"
-            class="chart-checkbox"
-          >
-            <input
-              type="checkbox"
-              :value="col"
-              v-model="selectedCols"
-            />
-            {{ col }}
-          </label>
+            type="button"
+            class="col-pill"
+            :class="{ 'col-pill--active': selectedCols.includes(col) }"
+            @click="toggleCol(col)"
+          >{{ col }}</button>
           <span v-if="numericColumns.length === 0" class="chart-empty">
             No numeric columns in this dataset.
           </span>
@@ -151,6 +157,7 @@ const selectedCols   = ref([])
 const chartType      = ref('line')
 const pageSize       = ref(50)
 const currentPage    = ref(0)
+const colsOpen       = ref(false)   // columns panel collapsed by default
 /** Turbine names currently hidden — shared across all charts */
 const hiddenTurbines = ref(new Set())
 
@@ -158,6 +165,12 @@ const chartTypes = [
   { value: 'line', label: '📈 Line' },
   { value: 'bar',  label: '📊 Bar'  },
 ]
+
+function toggleCol(col) {
+  const i = selectedCols.value.indexOf(col)
+  if (i === -1) selectedCols.value = [...selectedCols.value, col]
+  else selectedCols.value = selectedCols.value.filter(c => c !== col)
+}
 
 // ── Multi-turbine detection ────────────────────────────────────────────────
 const isMultiTurbine = computed(() => props.result.columns.includes('Turbine'))
@@ -437,26 +450,101 @@ watch(
   color: #555;
 }
 
-/* Column checkbox list */
-.chart-col-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px 14px;
-  max-height: 160px;
-  overflow-y: auto;
-  min-width: 260px;
+/* Controls — columns group stretches full width */
+.chart-control-group--cols {
+  flex: 1 1 100%;
 }
 
-.chart-checkbox {
+.chart-label-row {
   display: flex;
   align-items: center;
-  gap: 5px;
-  font-size: 13px;
+  gap: 10px;
+}
+
+/* Collapsible toggle button */
+.cols-toggle {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: none;
+  border: none;
+  padding: 0;
   cursor: pointer;
   user-select: none;
-  white-space: nowrap;
 }
-.chart-checkbox input { accent-color: #4361ee; cursor: pointer; }
+.cols-toggle:hover .chart-label { color: #4361ee; }
+
+.cols-toggle-arrow {
+  font-size: 9px;
+  color: #888;
+  transition: transform .18s;
+  display: inline-block;
+}
+.cols-toggle-arrow.open { transform: rotate(90deg); }
+
+.cols-summary {
+  font-size: 11px;
+  color: #888;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.col-quick-btns {
+  display: flex;
+  gap: 4px;
+}
+
+.col-quick-btn {
+  padding: 2px 9px;
+  font-size: 11px;
+  border: 1px solid #c5cae0;
+  border-radius: 20px;
+  background: #fff;
+  color: #4361ee;
+  cursor: pointer;
+  font-weight: 600;
+  transition: background .12s, color .12s;
+}
+.col-quick-btn:hover { background: #eef1fd; }
+
+/* Pill list */
+.chart-pill-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 0;
+}
+
+.col-pill {
+  padding: 5px 13px;
+  border: 1.5px solid #d0d5dd;
+  border-radius: 20px;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  transition: background .12s, color .12s, border-color .12s, box-shadow .12s;
+  white-space: nowrap;
+  user-select: none;
+}
+.col-pill:hover {
+  border-color: #4361ee;
+  color: #4361ee;
+  background: #f0f3ff;
+}
+.col-pill--active {
+  background: #4361ee;
+  border-color: #4361ee;
+  color: #fff;
+  box-shadow: 0 1px 4px #4361ee44;
+}
+.col-pill--active:hover {
+  background: #3451d1;
+  border-color: #3451d1;
+  color: #fff;
+}
 
 .chart-empty {
   font-size: 13px;

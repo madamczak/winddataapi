@@ -3,8 +3,8 @@
 # pi1.sh — Raspberry Pi 1 crawler runner
 #
 # Patterns assigned to this Pi:
-#   • high_wind_full_spin  (kelmarsh)   – near-rated power, high wind
-#   • farm_stopped         (kelmarsh)   – entire farm offline
+#   • high_wind_full_spin  (kelmarsh + penmanshiel)   – near-rated power, high wind
+#   • farm_stopped         (kelmarsh + penmanshiel)   – entire farm offline
 #
 # Copy this whole repo (or just crawler/apicrawler + runners) to the Pi,
 # run  bash runners/install.sh  once, then the crontab entry will fire
@@ -63,11 +63,11 @@ echo "======================================" | tee -a "$LOG_FILE"
 echo "$(date -u +%FT%TZ)  [pi1] Starting — seed=$SEED  api=$API" \
     | tee -a "$LOG_FILE"
 
-# ── Pattern 1: high_wind_full_spin ────────────────────────────────────────────
-echo "$(date -u +%FT%TZ)  [pi1] Running: high_wind_full_spin" | tee -a "$LOG_FILE"
+# ── Pattern 1: high_wind_full_spin — kelmarsh ────────────────────────────────
+echo "$(date -u +%FT%TZ)  [pi1] Running: high_wind_full_spin (kelmarsh)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         kelmarsh \
     --pattern      high_wind_full_spin \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
@@ -75,16 +75,40 @@ echo "$(date -u +%FT%TZ)  [pi1] Running: high_wind_full_spin" | tee -a "$LOG_FIL
     --seed         "$SEED" \
     2>&1 | tee -a "$LOG_FILE"
 
-# ── Pattern 2: farm_stopped ───────────────────────────────────────────────────
-echo "$(date -u +%FT%TZ)  [pi1] Running: farm_stopped" | tee -a "$LOG_FILE"
+# ── Pattern 1: high_wind_full_spin — penmanshiel ─────────────────────────────
+echo "$(date -u +%FT%TZ)  [pi1] Running: high_wind_full_spin (penmanshiel)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         penmanshiel \
+    --pattern      high_wind_full_spin \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 500000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+# ── Pattern 2: farm_stopped — kelmarsh ───────────────────────────────────────
+echo "$(date -u +%FT%TZ)  [pi1] Running: farm_stopped (kelmarsh)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         kelmarsh \
     --pattern      farm_stopped \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
     --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 1000000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+# ── Pattern 2: farm_stopped — penmanshiel ────────────────────────────────────
+echo "$(date -u +%FT%TZ)  [pi1] Running: farm_stopped (penmanshiel)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         penmanshiel \
+    --pattern      farm_stopped \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 1500000)) \
     2>&1 | tee -a "$LOG_FILE"
 
 echo "$(date -u +%FT%TZ)  [pi1] Done." | tee -a "$LOG_FILE"

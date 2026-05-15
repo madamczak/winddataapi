@@ -3,8 +3,8 @@
 # pi2.sh — Raspberry Pi 2 crawler runner
 #
 # Patterns assigned to this Pi:
-#   • rated_power          (kelmarsh)   – very stable near-nameplate power
-#   • partial_performance  (kelmarsh)   – curtailment / sub-rated operation
+#   • rated_power          (kelmarsh + penmanshiel)   – very stable near-nameplate power
+#   • partial_performance  (kelmarsh + penmanshiel)   – curtailment / sub-rated operation
 #
 # Manual run:
 #   WINDDATA_API=https://your-api.onrender.com bash runners/pi2.sh
@@ -54,10 +54,10 @@ echo "======================================" | tee -a "$LOG_FILE"
 echo "$(date -u +%FT%TZ)  [pi2] Starting — seed=$SEED  api=$API" \
     | tee -a "$LOG_FILE"
 
-echo "$(date -u +%FT%TZ)  [pi2] Running: rated_power" | tee -a "$LOG_FILE"
+echo "$(date -u +%FT%TZ)  [pi2] Running: rated_power (kelmarsh)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         kelmarsh \
     --pattern      rated_power \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
@@ -65,15 +65,37 @@ echo "$(date -u +%FT%TZ)  [pi2] Running: rated_power" | tee -a "$LOG_FILE"
     --seed         "$SEED" \
     2>&1 | tee -a "$LOG_FILE"
 
-echo "$(date -u +%FT%TZ)  [pi2] Running: partial_performance" | tee -a "$LOG_FILE"
+echo "$(date -u +%FT%TZ)  [pi2] Running: rated_power (penmanshiel)" | tee -a "$LOG_FILE"
 "$PYTHON" "$CRAWL" \
     --api          "$API" \
-    --farm         "$FARM" \
+    --farm         penmanshiel \
+    --pattern      rated_power \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 500000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+echo "$(date -u +%FT%TZ)  [pi2] Running: partial_performance (kelmarsh)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         kelmarsh \
     --pattern      partial_performance \
     --iterations   "$ITERATIONS" \
     --delay        "$DELAY" \
     --turbine-delay "$TURBINE_DELAY" \
     --seed         $((SEED + 1000000)) \
+    2>&1 | tee -a "$LOG_FILE"
+
+echo "$(date -u +%FT%TZ)  [pi2] Running: partial_performance (penmanshiel)" | tee -a "$LOG_FILE"
+"$PYTHON" "$CRAWL" \
+    --api          "$API" \
+    --farm         penmanshiel \
+    --pattern      partial_performance \
+    --iterations   "$ITERATIONS" \
+    --delay        "$DELAY" \
+    --turbine-delay "$TURBINE_DELAY" \
+    --seed         $((SEED + 1500000)) \
     2>&1 | tee -a "$LOG_FILE"
 
 echo "$(date -u +%FT%TZ)  [pi2] Done." | tee -a "$LOG_FILE"
