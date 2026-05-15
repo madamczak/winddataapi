@@ -297,6 +297,9 @@ def crawl(
     pi: str = "",
     min_match_ratio: float = 0.7,
 ) -> None:
+    # global declaration must come before any use of `log` in this function
+    global log
+
     if pattern_name not in PATTERNS:
         log.error(f"Unknown pattern '{pattern_name}'. "
                   f"Available: {list(PATTERNS.keys())}")
@@ -306,7 +309,6 @@ def crawl(
 
     # Replace module-level logger with a Loki-aware one that includes
     # farm / pattern / pi as Loki stream labels for Grafana filtering.
-    global log
     log = get_loki_logger(
         "apicrawler",
         farm=farm,
