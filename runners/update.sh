@@ -30,12 +30,8 @@ if [ -d "$VENV" ]; then
     echo "→ Updating Python dependencies …"
     "$VENV/bin/pip" install --quiet --upgrade pip
 
-    # Install from crawler requirements if present, else just core deps
-    if [ -f "$REPO_DIR/crawler/requirements.txt" ]; then
-        "$VENV/bin/pip" install --quiet -r "$REPO_DIR/crawler/requirements.txt"
-    else
-        "$VENV/bin/pip" install --quiet requests
-    fi
+    # apicrawler only needs requests
+    "$VENV/bin/pip" install --quiet requests
     echo "   Dependencies up to date."
 else
     echo "WARNING: .venv not found — run  bash runners/install.sh  first."
