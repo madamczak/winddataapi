@@ -11,6 +11,15 @@
 # =============================================================================
 set -euo pipefail
 
+# ── Load .env so ALL variables (incl. GRAFANA_*) are exported to subprocesses ─
+SCRIPT_DIR_EARLY="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+if [ -f "$SCRIPT_DIR_EARLY/.env" ]; then
+    set -a
+    # shellcheck source=/dev/null
+    . "$SCRIPT_DIR_EARLY/.env"
+    set +a
+fi
+
 API="${WINDDATA_API:-https://winddataapi-backend.onrender.com}"
 FARM="${WIND_FARM:-kelmarsh}"
 ITERATIONS="${CRAWL_ITERATIONS:-2}"    # 2 slots × ~3 min delay ≈ 6 min per pattern
