@@ -1,0 +1,204 @@
+{
+  "dashboard": {
+    "id": null,
+    "uid": null,
+    "title": "Pytest Results - Simple",
+    "tags": ["pytest"],
+    "timezone": "browser",
+    "schemaVersion": 38,
+    "version": 1,
+    "editable": true,
+    "refresh": "30s",
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "panels": [
+      {
+        "id": 1,
+        "type": "stat",
+        "title": "Passed",
+        "gridPos": {
+          "x": 0,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"info\"} |= \"TEST PASSED\" [1h]))",
+            "queryType": "range",
+            "instant": true
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "values": false
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "none",
+          "justifyMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed",
+              "fixedColor": "green"
+            }
+          },
+          "overrides": []
+        }
+      },
+      {
+        "id": 2,
+        "type": "stat",
+        "title": "Failed",
+        "gridPos": {
+          "x": 4,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"error\"} |= \"TEST FAILED\" [1h]))",
+            "queryType": "range",
+            "instant": true
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "values": false
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "none",
+          "justifyMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed",
+              "fixedColor": "red"
+            }
+          },
+          "overrides": []
+        }
+      },
+      {
+        "id": 3,
+        "type": "stat",
+        "title": "Skipped",
+        "gridPos": {
+          "x": 8,
+          "y": 0,
+          "w": 4,
+          "h": 4
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"warning\"} |= \"TEST SKIPPED\" [1h]))",
+            "queryType": "range",
+            "instant": true
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "calcs": ["lastNotNull"],
+            "values": false
+          },
+          "orientation": "auto",
+          "textMode": "auto",
+          "colorMode": "value",
+          "graphMode": "none",
+          "justifyMode": "auto"
+        },
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "fixed",
+              "fixedColor": "orange"
+            }
+          },
+          "overrides": []
+        }
+      },
+      {
+        "id": 4,
+        "type": "piechart",
+        "title": "Test Distribution",
+        "gridPos": {
+          "x": 0,
+          "y": 4,
+          "w": 12,
+          "h": 6
+        },
+        "datasource": {
+          "type": "loki",
+          "uid": "Loki"
+        },
+        "targets": [
+          {
+            "refId": "A",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"info\"} |= \"TEST PASSED\" [1h]))",
+            "legendFormat": "Passed",
+            "instant": true
+          },
+          {
+            "refId": "B",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"error\"} |= \"TEST FAILED\" [1h]))",
+            "legendFormat": "Failed",
+            "instant": true
+          },
+          {
+            "refId": "C",
+            "expr": "sum(count_over_time({app=\"wind_data_tests\", level=\"warning\"} |= \"TEST SKIPPED\" [1h]))",
+            "legendFormat": "Skipped",
+            "instant": true
+          }
+        ],
+        "options": {
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          },
+          "pieType": "pie",
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "list",
+            "placement": "bottom"
+          }
+        },
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          },
+          "overrides": []
+        }
+      }
+    ]
+  },
+  "overwrite": true
+}

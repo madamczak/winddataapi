@@ -1,0 +1,131 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 1",
+        "alternative_title": "KWF1",
+        "identity": "SEN 93420",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 78.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 145.598,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.947133, 52.400604]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 2",
+        "alternative_title": "KWF2",
+        "identity": "SEN 93421",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 78.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 156.577,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.949527, 52.402551]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 3",
+        "alternative_title": "KWF3",
+        "identity": "SEN 93422",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 68.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 153.477,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.94419, 52.403834]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 4",
+        "alternative_title": "KWF4",
+        "identity": "SEN 93423",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 78.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 146.313,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.94115, 52.398781]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 5",
+        "alternative_title": "KWF5",
+        "identity": "SEN 93424",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 78.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 142.901,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.940537, 52.402308]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "wind_farm": "Kelmarsh",
+        "title": "Kelmarsh 6",
+        "alternative_title": "KWF6",
+        "identity": "SEN 93425",
+        "manufacturer": "Senvion",
+        "model": "MM92",
+        "rated_power_kw": 2050,
+        "hub_height_m": 68.5,
+        "rotor_diameter_m": 92,
+        "elevation_m": 135.039,
+        "country": "UK",
+        "commercial_operations_date": "2016-04-15"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [-0.936093, 52.400687]
+      }
+    }
+  ]
+}
