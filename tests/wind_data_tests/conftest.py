@@ -1,43 +1,44 @@
 from __future__ import annotations
+
 import atexit
-import getpass
-import re
-import os
-import json
-import time
 import base64
-import threading
+import getpass
+import json
+import logging
+import os
 import queue
+import re
+import threading
+import time
 import uuid
 from datetime import datetime
-from pytest_metadata.plugin import metadata_key
-from playwright.sync_api import sync_playwright
-import logging
+
 import pytest
 import requests
+from playwright.sync_api import sync_playwright
 from pytest_check import check
-
+from pytest_metadata.plugin import metadata_key
 
 # Grafana Loki configuration
 # Credentials - set these environment variables
 LOKI_INSTANCE_ID = os.environ.get("GRAFANA_LOKI_INSTANCE_ID", "1380423")
-TOKEN = os.environ.get("GRAFANA_TOKEN", "glc_eyJvIjoiMTU3NTg3MCIsIm4iOiJzdGFjay0xNDIyNjI5LWludGVncmF0aW9uLXRlc3R0b2tlbiIsImsiOiIxUVJKQzROdExFMmMwOTlxQjg3a3hHMjciLCJtIjp7InIiOiJwcm9kLWV1LW5vcnRoLTAifX0=")
+TOKEN = os.environ.get("GRAFANA_TOKEN",
+                       "glc_eyJvIjoiMTU3NTg3MCIsIm4iOiJzdGFjay0xNDIyNjI5LWludGVncmF0aW9uLXRlc3R0b2tlbiIsImsiOiIxUVJKQzROdExFMmMwOTlxQjg3a3hHMjciLCJtIjp7InIiOiJwcm9kLWV1LW5vcnRoLTAifX0=")
 
 # Push endpoints — copy from your Grafana Cloud stack details page
 LOKI_URL = os.environ.get("GRAFANA_LOKI_URL",
-                    "https://logs-prod-025.grafana.net/loki/api/v1/push")
+                          "https://logs-prod-025.grafana.net/loki/api/v1/push")
 ENV = os.environ.get("ENVIRONMENT", "test")
 
 APP_NAME = "wind_data_tests"
 
 LOKI_ENABLED = bool(LOKI_INSTANCE_ID and TOKEN)
 
-SESSION_ID = str(uuid.uuid4())
+SESSION_ID = str(uuid.uuid4().hex[:8])
 START_TIME = time.time()
 
 # Basic auth header for Grafana Cloud
 _loki_b64 = base64.b64encode(f"{LOKI_INSTANCE_ID}:{TOKEN}".encode()).decode()
-
 
 # ── Loki log handler (queue-based, reliable delivery) ─────────────────────────
 _log_queue: queue.Queue = queue.Queue()
@@ -47,11 +48,11 @@ def _loki_worker():
     """Background thread: drain the queue and push batches to Loki."""
     headers = {
         "Authorization": f"Basic {_loki_b64}",
-        "Content-Type":  "application/json",
+        "Content-Type": "application/json",
     }
     while True:
         item = _log_queue.get()
-        if item is None:          # sentinel → shut down
+        if item is None:  # sentinel → shut down
             _log_queue.task_done()
             break
         try:
@@ -88,7 +89,7 @@ class _LokiHandler(logging.Handler):
                     "stream": {
                         "app": APP_NAME,
                         "level": record.levelname.lower(),
-                        "env":   ENV,
+                        "env": ENV,
                     },
                     "values": [[str(int(record.created * 1e9)), self.format(record)]],
                 }]
@@ -130,9 +131,11 @@ def pytest_runtest_logreport(report):
         if status == 'passed':
             logging.info(f'TEST PASSED ({int(report.duration)}s) [{SESSION_ID}]: {"::".join(parts)}')
         elif status == 'failed':
-            logging.error(f'TEST FAILED ({int(report.duration)}s) [{SESSION_ID}]: {"::".join(parts)}: {report.longreprtext}')
+            logging.error(
+                f'TEST FAILED ({int(report.duration)}s) [{SESSION_ID}]: {"::".join(parts)}: {report.longreprtext}')
     elif report.when == 'setup' and report.outcome == 'skipped':
-        logging.warning(f'TEST SKIPPED ({int(report.duration)}s) [{SESSION_ID}]: {"::".join(parts)}: {report.longreprtext}')
+        logging.warning(
+            f'TEST SKIPPED ({int(report.duration)}s) [{SESSION_ID}]: {"::".join(parts)}: {report.longreprtext}')
 
 
 def pytest_addoption(parser):
@@ -155,7 +158,8 @@ def browser(request):
     headed = request.config.getoption("--headed")
     slow_mo = request.config.getoption("--slowmo")
     with sync_playwright() as p:
-        browser = getattr(p, browser_name).launch(headless=not (headed), slow_mo=slow_mo, args=["--start-maximized"], downloads_path='.')
+        browser = getattr(p, browser_name).launch(headless=not (headed), slow_mo=slow_mo, args=["--start-maximized"],
+                                                  downloads_path='.')
         request.config.stash[metadata_key]["browser"] = f'{browser.browser_type.name} {browser.version}'
         request.config.stash[metadata_key]["browser headed"] = headed
         request.config.stash[metadata_key]["browser slow motion"] = slow_mo
@@ -177,7 +181,6 @@ def page(browser, request):
 
 
 def get_locator_attributes(locator, get_checked, get_editable, get_value, get_expanded):
-
     exist = True if locator.count() > 0 else False
     if exist:
         highlight(locator, color='yellow')
@@ -202,7 +205,8 @@ def get_locator_attributes(locator, get_checked, get_editable, get_value, get_ex
                 expanded = False
             else:
                 expanded = None
-        return {'exist': exist, 'visible': visible, 'enabled': enabled, 'text': text, 'value': value, 'expanded': expanded,
+        return {'exist': exist, 'visible': visible, 'enabled': enabled, 'text': text, 'value': value,
+                'expanded': expanded,
                 'checked': checked,
                 'editable': editable
                 }
@@ -227,7 +231,8 @@ def check_locator_attributes(locator, exist=True, visible=True, enabled=True, te
         get_value = True
     if expanded is not None:
         get_expanded = True
-    attribs = get_locator_attributes(locator, get_checked=get_checked, get_editable=get_editable, get_value=get_value, get_expanded=get_expanded)
+    attribs = get_locator_attributes(locator, get_checked=get_checked, get_editable=get_editable, get_value=get_value,
+                                     get_expanded=get_expanded)
     overall_check_statuses = []
     if attribs['exist']:
         highlight(locator, color='orange')
@@ -237,7 +242,6 @@ def check_locator_attributes(locator, exist=True, visible=True, enabled=True, te
         checked_msg = f'Locator {locator} is not checked' if checked else f'Locator {locator} is checked'
         expanded_msg = f'Locator {locator} is not expanded' if expanded else f'Locator {locator} is expanded'
         editable_msg = f'Locator {locator} is not editable' if editable else f'Locator {locator} is editable'
-
 
         overall_check_statuses.append(check.equal(attribs['exist'], exist, exist_msg))
         overall_check_statuses.append(
@@ -262,7 +266,8 @@ def check_locator_attributes(locator, exist=True, visible=True, enabled=True, te
                 check.equal(attribs['value'], value, f'Locator: {locator} value does not match expected'))
         if text_re is not None:
             overall_check_statuses.append(
-                check.is_true(bool(re.search(text_re, attribs['text'])), f"Locator: {locator} text: {attribs['text']} does not match regex '{text_re}'"))
+                check.is_true(bool(re.search(text_re, attribs['text'])),
+                              f"Locator: {locator} text: {attribs['text']} does not match regex '{text_re}'"))
 
         if not all(overall_check_statuses):
             highlight(locator, color='red')
@@ -274,12 +279,12 @@ def check_locator_attributes(locator, exist=True, visible=True, enabled=True, te
 
 
 def highlight(locator, thickness=3, style='solid', color='orange'):
-    locator.evaluate(f"element => {{element.style.outline = '{str(thickness)}px {style} {color}';element.style.outlineOffset = '1px'}}")
+    locator.evaluate(
+        f"element => {{element.style.outline = '{str(thickness)}px {style} {color}';element.style.outlineOffset = '1px'}}")
 
 
 def pytest_sessionfinish(session, exitstatus):
     """Log the overall test session results."""
-
 
     duration = time.time() - START_TIME
 
@@ -294,16 +299,9 @@ def pytest_sessionfinish(session, exitstatus):
 
     overall_status = "PASSED" if failed == 0 else "FAILED"
 
-    logging.info(
-        "SESSION %s (%ss): session_id=%s, duration=%s, passed=%d, failed=%d, "
-        "skipped=%d, pass_rate=%.2f%%",
-        overall_status,
-        int(duration),
-        SESSION_ID,
-        int(duration),
-        passed,
-        failed,
-        skipped,
-        pass_rate,
-    )
+    session_log = f"SESSION {overall_status} ({int(duration)}s): session_id={SESSION_ID} duration_s={int(duration)} passed={passed} failed={failed} skipped={skipped} total={total} pass_rate_perc={round(pass_rate, 2)}"
 
+    if overall_status == "PASSED":
+        logging.info(session_log)
+    elif overall_status == "FAILED":
+        logging.error(session_log)
