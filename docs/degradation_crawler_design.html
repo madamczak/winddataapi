@@ -1,0 +1,3337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind Turbine Degradation Crawler — Design Document</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #22263a;
+    --border: #2e3352;
+    --accent: #4f8ef7;
+    --accent2: #7c5cbf;
+    --green: #3ecf8e;
+    --orange: #f5a623;
+    --red: #e05252;
+    --yellow: #f5e642;
+    --text: #e2e8f0;
+    --muted: #8892a4;
+    --code-bg: #141720;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0 0 60px 0;
+  }
+  .hero {
+    background: linear-gradient(135deg, #0f1117 0%, #1a1d40 50%, #0f1117 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 60px 40px 50px;
+    text-align: center;
+  }
+  .hero h1 { font-size: 2.4rem; font-weight: 700; color: #fff; margin-bottom: 12px; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { color: var(--muted); font-size: 1.1rem; max-width: 680px; margin: 0 auto; }
+  .tag {
+    display: inline-block;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 3px 12px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin: 4px;
+  }
+  .tags { margin-top: 20px; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 32px; }
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 50px 0 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  h2 .num {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    flex-shrink: 0;
+  }
+  h3 { font-size: 1.1rem; color: var(--accent); margin: 24px 0 10px; font-weight: 600; }
+  p { color: var(--muted); margin-bottom: 12px; }
+  strong { color: var(--text); }
+  ul, ol { color: var(--muted); padding-left: 24px; margin-bottom: 12px; }
+  li { margin-bottom: 6px; }
+  li strong { color: var(--text); }
+
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin: 20px 0; }
+  @media(max-width: 700px) { .grid2, .grid3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .card h4 { color: var(--text); font-size: 0.95rem; margin-bottom: 8px; }
+  .card p, .card li { font-size: 0.88rem; }
+
+  code {
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.82em;
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 1px 5px;
+    color: var(--green);
+  }
+  pre {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    overflow-x: auto;
+    margin: 16px 0;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+    font-size: 0.83rem;
+    line-height: 1.6;
+    color: var(--text);
+  }
+  pre .kw  { color: #c792ea; }
+  pre .fn  { color: #82aaff; }
+  pre .st  { color: #c3e88d; }
+  pre .cm  { color: #546e7a; font-style: italic; }
+  pre .nb  { color: var(--orange); }
+  pre .num { color: var(--yellow); }
+
+  .alert {
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-left: 4px solid;
+    font-size: 0.9rem;
+  }
+  .alert-blue  { background: #1a2744; border-color: var(--accent);  color: #9ec8f7; }
+  .alert-green { background: #0f2a1f; border-color: var(--green);   color: #7de8b8; }
+  .alert-orange{ background: #2a1e0f; border-color: var(--orange);  color: #f5c77a; }
+  .alert-red   { background: #2a0f0f; border-color: var(--red);     color: #f09090; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 0.88rem;
+  }
+  th {
+    background: var(--bg3);
+    color: var(--text);
+    padding: 10px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    vertical-align: top;
+  }
+  tr:hover td { background: var(--bg2); }
+  td code { font-size: 0.8rem; }
+  td.good { color: var(--green); }
+  td.warn { color: var(--orange); }
+  td.bad  { color: var(--red); }
+
+  /* ── Architecture diagram ───────────────────────────── */
+  .arch-wrap {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 30px;
+    margin: 20px 0;
+    overflow-x: auto;
+  }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+
+  /* ── Phase timeline ──────────────────────────────────── */
+  .phases { display: flex; gap: 0; margin: 20px 0; position: relative; }
+  .phase {
+    flex: 1;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 18px 16px;
+    position: relative;
+  }
+  .phase:first-child { border-radius: 10px 0 0 10px; }
+  .phase:last-child  { border-radius: 0 10px 10px 0; }
+  .phase::after {
+    content: '▶';
+    position: absolute;
+    right: -14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent);
+    font-size: 1.1rem;
+    z-index: 2;
+  }
+  .phase:last-child::after { display: none; }
+  .phase-num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .phase-title { font-size: 0.9rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .phase-desc  { font-size: 0.78rem; color: var(--muted); }
+  @media(max-width: 650px) {
+    .phases { flex-direction: column; }
+    .phase::after { display: none; }
+    .phase:first-child, .phase:last-child { border-radius: 0; }
+    .phase:first-child { border-radius: 10px 10px 0 0; }
+    .phase:last-child  { border-radius: 0 0 10px 10px; }
+  }
+
+  .pill {
+    display: inline-block;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    margin: 2px;
+  }
+  .pill-blue   { background: #1a2744; color: var(--accent); border: 1px solid var(--accent); }
+  .pill-green  { background: #0f2a1f; color: var(--green);  border: 1px solid var(--green); }
+  .pill-orange { background: #2a1e0f; color: var(--orange); border: 1px solid var(--orange); }
+  .pill-purple { background: #1e1a2a; color: #c792ea;       border: 1px solid #c792ea; }
+  .pill-red    { background: #2a0f0f; color: var(--red);    border: 1px solid var(--red); }
+
+  .formula {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 24px;
+    margin: 14px 0;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.9rem;
+    color: var(--yellow);
+    text-align: center;
+    letter-spacing: 0.5px;
+  }
+  .formula span { color: var(--muted); font-size: 0.78rem; display: block; margin-top: 6px; }
+
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  .toc {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin: 30px 0 10px;
+    display: inline-block;
+    min-width: 260px;
+  }
+  .toc h4 { color: var(--text); margin-bottom: 10px; font-size: 0.9rem; }
+  .toc ol { margin: 0; color: var(--muted); font-size: 0.87rem; }
+  .toc a { color: var(--accent); text-decoration: none; }
+  .toc a:hover { text-decoration: underline; }
+
+  .sig-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.87rem;
+  }
+  .sig-row:last-child { border-bottom: none; }
+  .sig-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .sig-name { color: var(--text); width: 260px; flex-shrink: 0; }
+  .sig-desc { color: var(--muted); }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Wind Turbine <span>Degradation</span> Crawler</h1>
+  <p>A methodology and architecture for detecting bearing, gearbox, and generator degradation
+  by comparing temperature indicators under equivalent operating conditions over time — combined with service log correlation.</p>
+  <div class="tags">
+    <span class="tag">Python</span>
+    <span class="tag">FastAPI</span>
+    <span class="tag">Kelmarsh / Penmanshiel SCADA</span>
+    <span class="tag">Condition Monitoring</span>
+    <span class="tag">Anomaly Detection</span>
+    <span class="tag">Grafana Loki</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="toc">
+    <h4>📋 Contents</h4>
+    <ol>
+      <li><a href="#problem">The Problem</a></li>
+      <li><a href="#key-insight">Key Insight — Normalised Temperature</a></li>
+      <li><a href="#signals">Temperature Signals Available</a></li>
+      <li><a href="#architecture">System Architecture</a></li>
+      <li><a href="#phases">Crawler Phases</a></li>
+      <li><a href="#binning">Operating Condition Binning</a></li>
+      <li><a href="#service-logs">Service Log Integration</a></li>
+      <li><a href="#algorithm">Detection Algorithm</a></li>
+      <li><a href="#patterns">Pattern Definitions</a></li>
+      <li><a href="#implementation">Implementation Guide</a></li>
+      <li><a href="#output">Output Schema</a></li>
+      <li><a href="#limits">Limitations &amp; Gotchas</a></li>
+      <li><a href="#deployment">Deployment on Raspberry Pi &amp; Bare-Metal / VM Hosts</a></li>
+      <li><a href="#monitoring">Grafana Fleet Monitoring</a></li>
+      <li><a href="#results">Result Classification — Evidence of Degradation vs. Healthy</a></li>
+      <li><a href="#frontend">Frontend Display of Degradation Results</a></li>
+      <li><a href="#environment">Uniform Python Environment Across All Nodes</a></li>
+    </ol>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 1 -->
+  <h2 id="problem"><span class="num">1</span> The Problem</h2>
+
+  <p>
+    Wind turbine bearings, gearboxes, and generators degrade over years of operation.
+    A classic early-warning signal is <strong>rising temperature under the same operating load</strong>.
+    As bearing surfaces wear, friction increases; as gear oil degrades, heat transfer worsens;
+    as generator insulation ages, copper losses grow. All of these produce excess heat.
+  </p>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong>The naive approach fails:</strong> You cannot simply compare "nacelle temperature in June 2019
+    vs June 2022" — the nacelle temperature is dominated by ambient temperature and wind speed,
+    not degradation. On a hot day at rated power, nacelle temp could be 10 °C higher than on a cold
+    calm day, regardless of turbine condition.
+  </div>
+
+  <p>
+    The solution is to compare temperatures <strong>only when operating conditions are the same</strong>
+    — same wind speed bin, same power output bin, same ambient temperature range — and track whether
+    the temperature for those conditions drifts upward over time.
+  </p>
+
+  <div class="alert alert-blue">
+    🌬️ <strong>Second-order effect — wind as a coolant (not in v1):</strong> Wind speed influences
+    component temperatures in two opposing ways: higher wind means <em>more mechanical load and
+    faster rotation</em> (more heat generated) but also <em>stronger convective cooling</em> of the
+    nacelle shell and tower. The net effect is component-specific — generator bearings are mostly
+    load-driven, while nacelle internal air temperature is strongly cooled by high winds even at
+    rated power. In the initial version we account for wind speed only through the <strong>operating
+    condition bin</strong> (which bundles load and wind together). A natural next step is to add
+    wind speed as an explicit continuous covariate in a regression model
+    (e.g. <code>T_expected = f(power, ambient, wind)</code>), which would remove the residual
+    cooling effect and produce cleaner degradation residuals — especially useful for nacelle
+    temperature. This is left as a <strong>v2 improvement</strong>.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 2 -->
+  <h2 id="key-insight"><span class="num">2</span> Key Insight — Normalised Temperature</h2>
+
+  <p>
+    Define a <strong>temperature residual</strong>: the difference between the measured component
+    temperature and an expected baseline temperature predicted purely from operating conditions.
+  </p>
+
+  <div class="formula">
+    ΔT = T_measured − T_baseline(wind_speed_bin, power_bin, ambient_bin)
+    <span>If ΔT drifts upward over months → degradation signal</span>
+  </div>
+
+  <p>
+    The baseline <code>T_baseline</code> is built from the <strong>first 6–12 months of operation</strong>
+    for each turbine (when it is assumed to be healthy), averaged within each operating condition bucket.
+    Subsequent hours are compared against this baseline. A sustained positive drift (e.g. +3 °C over 6 months
+    under equivalent conditions) is flagged.
+  </p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>✅ What this catches</h4>
+      <ul>
+        <li>Gradual bearing wear (front/rear main bearing, generator bearings)</li>
+        <li>Gear oil degradation — reduced heat transfer</li>
+        <li>Generator insulation aging — higher winding/stator temperatures</li>
+        <li>Cooling system blockage or fan degradation</li>
+        <li>Pitch bearing wear (via drive-train vibration → indirectly via temperature)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>❌ What this does NOT catch</h4>
+      <ul>
+        <li>Sudden failures (use alarm codes for those)</li>
+        <li>Problems that don't generate heat (blade erosion, yaw misalignment)</li>
+        <li>Events that only last &lt;1 hour (SCADA is 10-min averages)</li>
+        <li>Turbines with &lt;6 months of healthy baseline data</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 3 -->
+  <h2 id="signals"><span class="num">3</span> Temperature Signals Available</h2>
+
+  <table>
+    <thead>
+      <tr><th>SCADA Column</th><th>Component</th><th>Degradation Link</th><th>Priority</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>Generator bearing front temperature (°C)</code></td>
+        <td>Generator front bearing</td>
+        <td>Lubrication failure, race wear → friction heat</td>
+        <td class="good">High</td>
+      </tr>
+      <tr>
+        <td><code>Generator bearing rear temperature (°C)</code></td>
+        <td>Generator rear bearing</td>
+        <td>Same — rear bearings often fail first under axial load</td>
+        <td class="good">High</td>
+      </tr>
+      <tr>
+        <td><code>Stator temperature 1 (°C)</code></td>
+        <td>Generator stator winding</td>
+        <td>Insulation aging, increased resistance → I²R heating</td>
+        <td class="good">High</td>
+      </tr>
+      <tr>
+        <td><code>Gear oil temperature (°C)</code></td>
+        <td>Gearbox</td>
+        <td>Oil degradation, gear tooth wear → excess heat</td>
+        <td class="good">High</td>
+      </tr>
+      <tr>
+        <td><code>Front bearing temperature (°C)</code></td>
+        <td>Main shaft front bearing</td>
+        <td>Grease loss or contamination in main bearing</td>
+        <td class="warn">Medium</td>
+      </tr>
+      <tr>
+        <td><code>Rear bearing temperature (°C)</code></td>
+        <td>Main shaft rear bearing</td>
+        <td>Same as above</td>
+        <td class="warn">Medium</td>
+      </tr>
+      <tr>
+        <td><code>Nacelle temperature (°C)</code></td>
+        <td>Nacelle internal air</td>
+        <td>Cumulative heat from multiple sources; noisy but broad</td>
+        <td class="warn">Medium</td>
+      </tr>
+      <tr>
+        <td><code>Nacelle ambient temperature (°C)</code></td>
+        <td>Outdoor ambient (reference)</td>
+        <td>Used as input to normalisation — not a degradation signal itself</td>
+        <td class="bad">Reference only</td>
+      </tr>
+      <tr>
+        <td><code>Drive train acceleration (mm/s²)</code></td>
+        <td>Drive train vibration</td>
+        <td>Bearing/gear damage → increased RMS vibration; pairs with temperature</td>
+        <td class="warn">Medium</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    <strong>Conditioning variables</strong> (used to normalise, not monitored for degradation):
+    <code>Wind speed (m/s)</code>, <code>Power (kW)</code>, <code>Rotor speed (RPM)</code>,
+    <code>Nacelle ambient temperature (°C)</code>.
+  </p>
+
+  <!-- ══════════════════════════════════════════════════════ 4 -->
+  <h2 id="architecture"><span class="num">4</span> System Architecture</h2>
+
+  <div class="arch-wrap">
+    <svg viewBox="0 0 960 540" width="100%" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arr" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#4f8ef7"/>
+        </marker>
+        <marker id="arr2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#3ecf8e"/>
+        </marker>
+        <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f5a623"/>
+        </marker>
+      </defs>
+
+      <!-- Background sections -->
+      <rect x="10" y="10" width="200" height="520" rx="10" fill="#1a1d27" stroke="#2e3352" stroke-width="1"/>
+      <rect x="230" y="10" width="220" height="520" rx="10" fill="#1a1d27" stroke="#2e3352" stroke-width="1"/>
+      <rect x="470" y="10" width="220" height="520" rx="10" fill="#1a1d27" stroke="#2e3352" stroke-width="1"/>
+      <rect x="710" y="10" width="240" height="520" rx="10" fill="#1a1d27" stroke="#2e3352" stroke-width="1"/>
+
+      <!-- Column headers -->
+      <text x="110" y="38" text-anchor="middle" fill="#4f8ef7" font-size="12" font-weight="bold">DATA SOURCES</text>
+      <text x="340" y="38" text-anchor="middle" fill="#3ecf8e" font-size="12" font-weight="bold">CRAWLER ENGINE</text>
+      <text x="580" y="38" text-anchor="middle" fill="#f5a623" font-size="12" font-weight="bold">ANALYSIS STORE</text>
+      <text x="830" y="38" text-anchor="middle" fill="#c792ea" font-size="12" font-weight="bold">OUTPUTS</text>
+
+      <!-- ── Data Sources ── -->
+      <!-- API box -->
+      <rect x="25" y="55" width="170" height="55" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1.5"/>
+      <text x="110" y="77" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">Wind Data API</text>
+      <text x="110" y="93" text-anchor="middle" fill="#8892a4" font-size="9.5">FastAPI + SQLite</text>
+      <text x="110" y="106" text-anchor="middle" fill="#8892a4" font-size="9">:8000 / Render</text>
+
+      <!-- SCADA Data -->
+      <rect x="25" y="130" width="170" height="50" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1"/>
+      <text x="110" y="152" text-anchor="middle" fill="#e2e8f0" font-size="10.5" font-weight="bold">SCADA Data</text>
+      <text x="110" y="167" text-anchor="middle" fill="#8892a4" font-size="9">/data/{date} — 10-min avgs</text>
+
+      <!-- Status Data -->
+      <rect x="25" y="200" width="170" height="50" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1"/>
+      <text x="110" y="222" text-anchor="middle" fill="#e2e8f0" font-size="10.5" font-weight="bold">Status / Service Logs</text>
+      <text x="110" y="238" text-anchor="middle" fill="#8892a4" font-size="9">/events — IEC categories</text>
+
+      <!-- Time range -->
+      <rect x="25" y="270" width="170" height="40" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1"/>
+      <text x="110" y="288" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="bold">Time Ranges</text>
+      <text x="110" y="303" text-anchor="middle" fill="#8892a4" font-size="9">2016–2021 (Kelmarsh + Penmanshiel)</text>
+
+      <!-- Turbines -->
+      <rect x="25" y="330" width="170" height="45" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1"/>
+      <text x="110" y="350" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="bold">Turbine List</text>
+      <text x="110" y="366" text-anchor="middle" fill="#8892a4" font-size="9">kelmarsh: 6,  penmanshiel: 15</text>
+
+      <!-- ── Crawler Engine ── -->
+      <!-- Baseline Builder -->
+      <rect x="245" y="55" width="190" height="65" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1.5"/>
+      <text x="340" y="77" text-anchor="middle" fill="#3ecf8e" font-size="11" font-weight="bold">Baseline Builder</text>
+      <text x="340" y="93" text-anchor="middle" fill="#8892a4" font-size="9.5">Months 1–12 per turbine</text>
+      <text x="340" y="108" text-anchor="middle" fill="#8892a4" font-size="9">→ bin averages per op condition</text>
+
+      <!-- Op Condition Binner -->
+      <rect x="245" y="145" width="190" height="65" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1"/>
+      <text x="340" y="167" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Op Condition Binner</text>
+      <text x="340" y="183" text-anchor="middle" fill="#8892a4" font-size="9.5">wind_bin × power_bin × ambient_bin</text>
+      <text x="340" y="198" text-anchor="middle" fill="#8892a4" font-size="9">e.g. 8–10 m/s, 1500–2000 kW, 5–15°C</text>
+
+      <!-- Residual Calculator -->
+      <rect x="245" y="235" width="190" height="60" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1"/>
+      <text x="340" y="257" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Residual Calculator</text>
+      <text x="340" y="273" text-anchor="middle" fill="#8892a4" font-size="9.5">ΔT = T_measured − T_baseline</text>
+      <text x="340" y="288" text-anchor="middle" fill="#8892a4" font-size="9">per component, per turbine, per hour</text>
+
+      <!-- Service Log Joiner -->
+      <rect x="245" y="320" width="190" height="60" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1"/>
+      <text x="340" y="342" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Service Log Joiner</text>
+      <text x="340" y="358" text-anchor="middle" fill="#8892a4" font-size="9.5">Mask maintenance windows</text>
+      <text x="340" y="373" text-anchor="middle" fill="#8892a4" font-size="9">Reset baseline after major service</text>
+
+      <!-- Drift Detector -->
+      <rect x="245" y="405" width="190" height="65" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1.5"/>
+      <text x="340" y="427" text-anchor="middle" fill="#3ecf8e" font-size="11" font-weight="bold">Drift Detector</text>
+      <text x="340" y="443" text-anchor="middle" fill="#8892a4" font-size="9.5">Rolling 30-day mean of ΔT</text>
+      <text x="340" y="459" text-anchor="middle" fill="#8892a4" font-size="9">Flag if slope &gt; threshold or ΔT &gt; σ-limit</text>
+
+      <!-- ── Analysis Store ── -->
+      <rect x="485" y="55" width="190" height="50" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="580" y="77" text-anchor="middle" fill="#f5a623" font-size="11" font-weight="bold">Baseline DB</text>
+      <text x="580" y="93" text-anchor="middle" fill="#8892a4" font-size="9.5">SQLite: T_baseline[turbine][bin]</text>
+
+      <rect x="485" y="130" width="190" height="50" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1"/>
+      <text x="580" y="152" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Residuals JSONL</text>
+      <text x="580" y="168" text-anchor="middle" fill="#8892a4" font-size="9.5">One line per turbine per hour</text>
+
+      <rect x="485" y="205" width="190" height="50" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1"/>
+      <text x="580" y="227" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Service Event Index</text>
+      <text x="580" y="243" text-anchor="middle" fill="#8892a4" font-size="9.5">Maintenance + repair dates</text>
+
+      <rect x="485" y="280" width="190" height="50" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1"/>
+      <text x="580" y="302" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Drift Alerts JSONL</text>
+      <text x="580" y="318" text-anchor="middle" fill="#8892a4" font-size="9.5">turbine + component + date + ΔT</text>
+
+      <!-- ── Outputs ── -->
+      <rect x="725" y="55" width="210" height="55" rx="8" fill="#22263a" stroke="#c792ea" stroke-width="1.5"/>
+      <text x="830" y="77" text-anchor="middle" fill="#c792ea" font-size="11" font-weight="bold">Grafana Dashboard</text>
+      <text x="830" y="93" text-anchor="middle" fill="#8892a4" font-size="9.5">ΔT time-series per turbine/component</text>
+      <text x="830" y="106" text-anchor="middle" fill="#8892a4" font-size="9">Anomaly annotations</text>
+
+      <rect x="725" y="135" width="210" height="50" rx="8" fill="#22263a" stroke="#c792ea" stroke-width="1"/>
+      <text x="830" y="157" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Grafana Loki Logs</text>
+      <text x="830" y="173" text-anchor="middle" fill="#8892a4" font-size="9.5">Per-turbine drift events + severity</text>
+
+      <rect x="725" y="210" width="210" height="50" rx="8" fill="#22263a" stroke="#c792ea" stroke-width="1"/>
+      <text x="830" y="232" text-anchor="middle" fill="#e2e8f0" font-size="11" font-weight="bold">Frontend Report Tab</text>
+      <text x="830" y="248" text-anchor="middle" fill="#8892a4" font-size="9.5">Degradation heatmap by turbine</text>
+
+      <rect x="725" y="285" width="210" height="50" rx="8" fill="#22263a" stroke="#e05252" stroke-width="1.5"/>
+      <text x="830" y="307" text-anchor="middle" fill="#e05252" font-size="11" font-weight="bold">Alert (email / webhook)</text>
+      <text x="830" y="323" text-anchor="middle" fill="#8892a4" font-size="9.5">When ΔT &gt; 5°C sustained &gt;30 days</text>
+
+      <!-- ── Arrows: Data → Crawler ── -->
+      <line x1="195" y1="82" x2="243" y2="82" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="195" y1="155" x2="243" y2="170" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="195" y1="225" x2="243" y2="345" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="195" y1="289" x2="243" y2="88" stroke="#4f8ef7" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr)"/>
+
+      <!-- ── Arrows: within Crawler ── -->
+      <line x1="340" y1="120" x2="340" y2="143" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="340" y1="210" x2="340" y2="233" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="340" y1="295" x2="340" y2="318" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="340" y1="380" x2="340" y2="403" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- ── Arrows: Crawler → Store ── -->
+      <line x1="435" y1="82" x2="483" y2="82" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="435" y1="175" x2="483" y2="155" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="435" y1="350" x2="483" y2="230" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="435" y1="437" x2="483" y2="305" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- ── Arrows: Store → Outputs ── -->
+      <line x1="675" y1="82" x2="723" y2="82" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="675" y1="155" x2="723" y2="160" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="675" y1="305" x2="723" y2="235" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="675" y1="305" x2="723" y2="310" stroke="#e05252" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 5 -->
+  <h2 id="phases"><span class="num">5</span> Crawler Phases</h2>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="phase-num">Phase 1</div>
+      <div class="phase-title">🏗️ Baseline</div>
+      <div class="phase-desc">Crawl first 6–12 months per turbine. Build <strong>T_baseline[bin]</strong> lookup table. Store in SQLite.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Phase 2</div>
+      <div class="phase-title">🔍 Scan</div>
+      <div class="phase-desc">Crawl subsequent months. For each hour, compute T_measured − T_baseline for each temperature column.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Phase 3</div>
+      <div class="phase-title">🔧 Service Join</div>
+      <div class="phase-desc">Pull service events. Mask ±7 days around maintenance. Reset baseline after major overhauls.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Phase 4</div>
+      <div class="phase-title">📈 Drift Detect</div>
+      <div class="phase-desc">Rolling 30-day mean of ΔT per turbine/component. Flag if mean &gt; 3 °C or slope &gt; 0.5 °C/month.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Phase 5</div>
+      <div class="phase-title">🚨 Alert</div>
+      <div class="phase-desc">Write drift alerts to JSONL. Push to Loki. Optionally send webhook / email.</div>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 6 -->
+  <h2 id="binning"><span class="num">6</span> Operating Condition Binning</h2>
+
+  <p>
+    Each hourly observation is assigned to a 3-dimensional bin. Only observations in the same bin
+    are compared to the baseline — this normalises for ambient, wind, and load simultaneously.
+  </p>
+
+  <div class="grid3">
+    <div class="card">
+      <h4>🌬️ Wind Speed Bins</h4>
+      <ul>
+        <li>3–5 m/s (cut-in)</li>
+        <li>5–7 m/s (low)</li>
+        <li>7–9 m/s (medium)</li>
+        <li>9–11 m/s (high)</li>
+        <li>11–13 m/s (near-rated)</li>
+        <li>13+ m/s (rated / curtailed)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>⚡ Power Output Bins</h4>
+      <ul>
+        <li>0–200 kW (cut-in)</li>
+        <li>200–800 kW (partial)</li>
+        <li>800–1 500 kW (mid-load)</li>
+        <li>1 500–2 000 kW (high)</li>
+        <li>2 000+ kW (rated)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🌡️ Ambient Temp Bins</h4>
+      <ul>
+        <li>&lt; 0 °C (freezing)</li>
+        <li>0–10 °C (cold)</li>
+        <li>10–20 °C (mild)</li>
+        <li>20–30 °C (warm)</li>
+        <li>30+ °C (hot)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="alert alert-blue">
+    💡 <strong>Minimum bin occupancy:</strong> A baseline bin must have ≥ 10 observations before it is used for comparison.
+    Bins with fewer observations are skipped (not enough data to estimate a stable mean).
+    This also means very rare operating conditions (e.g. extreme gusts at exactly cut-in power) are automatically excluded.
+  </div>
+
+  <p>
+    The bin key is a simple tuple string, e.g. <code>"(9-11, 1500-2000, 10-20)"</code>.
+    This keeps the baseline lookup O(1) with a dict.
+  </p>
+
+  <pre><span class="kw">def</span> <span class="fn">get_bin</span>(wind: float, power: float, ambient: float) -> str:
+    wind_b = (
+        <span class="st">"3-5"</span>   <span class="kw">if</span> wind &lt;  <span class="num">5</span>  <span class="kw">else</span>
+        <span class="st">"5-7"</span>   <span class="kw">if</span> wind &lt;  <span class="num">7</span>  <span class="kw">else</span>
+        <span class="st">"7-9"</span>   <span class="kw">if</span> wind &lt;  <span class="num">9</span>  <span class="kw">else</span>
+        <span class="st">"9-11"</span>  <span class="kw">if</span> wind &lt; <span class="num">11</span>  <span class="kw">else</span>
+        <span class="st">"11-13"</span> <span class="kw">if</span> wind &lt; <span class="num">13</span>  <span class="kw">else</span> <span class="st">"13+"</span>
+    )
+    power_b = (
+        <span class="st">"0-200"</span>     <span class="kw">if</span> power &lt;  <span class="num">200</span>  <span class="kw">else</span>
+        <span class="st">"200-800"</span>   <span class="kw">if</span> power &lt;  <span class="num">800</span>  <span class="kw">else</span>
+        <span class="st">"800-1500"</span>  <span class="kw">if</span> power &lt; <span class="num">1500</span>  <span class="kw">else</span>
+        <span class="st">"1500-2000"</span> <span class="kw">if</span> power &lt; <span class="num">2000</span>  <span class="kw">else</span> <span class="st">"2000+"</span>
+    )
+    amb_b = (
+        <span class="st">"&lt;0"</span>   <span class="kw">if</span> ambient &lt;  <span class="num">0</span>  <span class="kw">else</span>
+        <span class="st">"0-10"</span> <span class="kw">if</span> ambient &lt; <span class="num">10</span>  <span class="kw">else</span>
+        <span class="st">"10-20"</span> <span class="kw">if</span> ambient &lt; <span class="num">20</span> <span class="kw">else</span>
+        <span class="st">"20-30"</span> <span class="kw">if</span> ambient &lt; <span class="num">30</span> <span class="kw">else</span> <span class="st">"30+"</span>
+    )
+    <span class="kw">return</span> <span class="nb">f</span><span class="st">"({wind_b}, {power_b}, {amb_b})"</span></pre>
+
+  <!-- ══════════════════════════════════════════════════════ 7 -->
+  <h2 id="service-logs"><span class="num">7</span> Service Log Integration</h2>
+
+  <p>
+    The status dataset contains IEC-categorised events. These are critical for two reasons:
+  </p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>🔇 Masking</h4>
+      <p>During and ±7 days after a maintenance event (<strong>IEC category M</strong>), temperatures
+      are abnormal (parts disturbed, fresh grease, cooling circuits drained). These hours must be
+      <strong>excluded</strong> from both baseline and residual calculations to avoid false signals.</p>
+    </div>
+    <div class="card">
+      <h4>🔄 Baseline Reset</h4>
+      <p>After a major overhaul (bearing replacement, gearbox change), the turbine is effectively
+      <em>new again</em> for that component. The baseline for affected temperature channels should
+      be <strong>rebuilt</strong> from the 3 months following the overhaul.</p>
+    </div>
+  </div>
+
+  <p>The relevant IEC categories to watch for:</p>
+
+  <table>
+    <thead><tr><th>IEC Category</th><th>Meaning</th><th>Action</th></tr></thead>
+    <tbody>
+      <tr><td><strong>M</strong> — Maintenance</td><td>Scheduled maintenance, lubrication</td><td>Mask ±7 days</td></tr>
+      <tr><td><strong>R</strong> — Repair</td><td>Component repair or replacement</td><td>Mask ±14 days + reset baseline</td></tr>
+      <tr><td><strong>F</strong> — Force majeure</td><td>Grid, weather, external forced stop</td><td>Mask duration only</td></tr>
+      <tr><td><strong>O</strong> — Operational</td><td>Normal stops, curtailment</td><td>No masking needed</td></tr>
+      <tr><td><strong>T</strong> — Test</td><td>Performance tests</td><td>Mask duration</td></tr>
+    </tbody>
+  </table>
+
+  <pre><span class="kw">def</span> <span class="fn">fetch_service_windows</span>(
+    session, api_base: str, farm: str, turbine: str
+) -> <span class="nb">list</span>[<span class="nb">tuple</span>[date, date]]:
+    <span class="cm">"""Return list of (start, end) date ranges to exclude for this turbine."""</span>
+    data = _get(session, <span class="nb">f</span><span class="st">"{api_base}/wind-farms/{farm}/{turbine}/events"</span>)
+    windows = []
+    <span class="kw">for</span> evt <span class="kw">in</span> (data <span class="kw">or</span> {}).get(<span class="st">"events"</span>, []):
+        iec = evt.get(<span class="st">"IEC category"</span>, <span class="st">""</span>)
+        <span class="kw">if</span> iec <span class="kw">in</span> (<span class="st">"M"</span>, <span class="st">"R"</span>, <span class="st">"T"</span>, <span class="st">"F"</span>):
+            t_start = date.fromisoformat(evt[<span class="st">"Timestamp start"</span>][:10])
+            t_end   = date.fromisoformat(evt[<span class="st">"Timestamp end"</span>][:10])
+            pad     = timedelta(days=<span class="num">14</span> <span class="kw">if</span> iec == <span class="st">"R"</span> <span class="kw">else</span> <span class="num">7</span>)
+            windows.append((t_start - pad, t_end + pad))
+    <span class="kw">return</span> windows
+
+<span class="kw">def</span> <span class="fn">is_masked</span>(d: date, windows: <span class="nb">list</span>) -> bool:
+    <span class="kw">return</span> <span class="nb">any</span>(s <= d <= e <span class="kw">for</span> s, e <span class="kw">in</span> windows)</pre>
+
+  <!-- ══════════════════════════════════════════════════════ 8 -->
+  <h2 id="algorithm"><span class="num">8</span> Detection Algorithm</h2>
+
+  <p>Full end-to-end flow for one turbine:</p>
+
+  <div class="arch-wrap">
+    <svg viewBox="0 0 860 420" width="100%" xmlns="http://www.w3.org/2000/svg">
+
+      <!-- Step boxes -->
+      <!-- Row 1 -->
+      <rect x="20"  y="30"  width="150" height="55" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1.5"/>
+      <text x="95"  y="53"  text-anchor="middle" fill="#4f8ef7" font-size="10.5" font-weight="bold">Fetch Service Events</text>
+      <text x="95"  y="69"  text-anchor="middle" fill="#8892a4" font-size="9">All IEC categories for</text>
+      <text x="95"  y="81"  text-anchor="middle" fill="#8892a4" font-size="9">this turbine's lifetime</text>
+
+      <rect x="200" y="30" width="150" height="55" rx="8" fill="#22263a" stroke="#4f8ef7" stroke-width="1.5"/>
+      <text x="275" y="53" text-anchor="middle" fill="#4f8ef7" font-size="10.5" font-weight="bold">Build Mask Windows</text>
+      <text x="275" y="69" text-anchor="middle" fill="#8892a4" font-size="9">±7 d maintenance</text>
+      <text x="275" y="81" text-anchor="middle" fill="#8892a4" font-size="9">±14 d repair/replace</text>
+
+      <rect x="380" y="30" width="155" height="55" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1.5"/>
+      <text x="457" y="53" text-anchor="middle" fill="#3ecf8e" font-size="10.5" font-weight="bold">Crawl Baseline Period</text>
+      <text x="457" y="69" text-anchor="middle" fill="#8892a4" font-size="9">Skip masked hours</text>
+      <text x="457" y="81" text-anchor="middle" fill="#8892a4" font-size="9">Accumulate into bins</text>
+
+      <rect x="560" y="30" width="150" height="55" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1.5"/>
+      <text x="635" y="53" text-anchor="middle" fill="#3ecf8e" font-size="10.5" font-weight="bold">Compute T_baseline</text>
+      <text x="635" y="69" text-anchor="middle" fill="#8892a4" font-size="9">Mean per bin (≥10 obs)</text>
+      <text x="635" y="81" text-anchor="middle" fill="#8892a4" font-size="9">Save to SQLite</text>
+
+      <rect x="730" y="30" width="110" height="55" rx="8" fill="#22263a" stroke="#3ecf8e" stroke-width="1.5"/>
+      <text x="785" y="58" text-anchor="middle" fill="#3ecf8e" font-size="10.5" font-weight="bold">Baseline Ready</text>
+      <text x="785" y="74" text-anchor="middle" fill="#8892a4" font-size="9">✅ stored per turbine</text>
+
+      <!-- Row 2 -->
+      <rect x="20"  y="180" width="155" height="55" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="97"  y="203" text-anchor="middle" fill="#f5a623" font-size="10.5" font-weight="bold">Crawl New Period</text>
+      <text x="97"  y="219" text-anchor="middle" fill="#8892a4" font-size="9">Month by month</text>
+      <text x="97"  y="231" text-anchor="middle" fill="#8892a4" font-size="9">after baseline end</text>
+
+      <rect x="200" y="180" width="155" height="55" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="277" y="203" text-anchor="middle" fill="#f5a623" font-size="10.5" font-weight="bold">For Each Hour</text>
+      <text x="277" y="219" text-anchor="middle" fill="#8892a4" font-size="9">Assign to op bin</text>
+      <text x="277" y="231" text-anchor="middle" fill="#8892a4" font-size="9">Skip if masked</text>
+
+      <rect x="380" y="180" width="155" height="55" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="457" y="200" text-anchor="middle" fill="#f5a623" font-size="10.5" font-weight="bold">Compute ΔT</text>
+      <text x="457" y="216" text-anchor="middle" fill="#8892a4" font-size="9">T_measured − T_baseline[bin]</text>
+      <text x="457" y="232" text-anchor="middle" fill="#8892a4" font-size="9">per temperature column</text>
+
+      <rect x="560" y="180" width="150" height="55" rx="8" fill="#22263a" stroke="#f5a623" stroke-width="1.5"/>
+      <text x="635" y="200" text-anchor="middle" fill="#f5a623" font-size="10.5" font-weight="bold">Rolling Window</text>
+      <text x="635" y="216" text-anchor="middle" fill="#8892a4" font-size="9">30-day mean ΔT</text>
+      <text x="635" y="232" text-anchor="middle" fill="#8892a4" font-size="9">per turbine × column</text>
+
+      <!-- Row 3 -->
+      <rect x="200" y="335" width="175" height="55" rx="8" fill="#22263a" stroke="#e05252" stroke-width="1.5"/>
+      <text x="287" y="358" text-anchor="middle" fill="#e05252" font-size="10.5" font-weight="bold">Drift Check</text>
+      <text x="287" y="374" text-anchor="middle" fill="#8892a4" font-size="9">mean30 &gt; 3°C → WARNING</text>
+      <text x="287" y="386" text-anchor="middle" fill="#8892a4" font-size="9">mean30 &gt; 5°C → CRITICAL</text>
+
+      <rect x="410" y="335" width="175" height="55" rx="8" fill="#22263a" stroke="#e05252" stroke-width="1.5"/>
+      <text x="497" y="358" text-anchor="middle" fill="#e05252" font-size="10.5" font-weight="bold">Save Alert</text>
+      <text x="497" y="374" text-anchor="middle" fill="#8892a4" font-size="9">Write JSONL + Loki push</text>
+      <text x="497" y="386" text-anchor="middle" fill="#8892a4" font-size="9">turbine + component + ΔT</text>
+
+      <rect x="620" y="335" width="175" height="55" rx="8" fill="#22263a" stroke="#c792ea" stroke-width="1.5"/>
+      <text x="707" y="358" text-anchor="middle" fill="#c792ea" font-size="10.5" font-weight="bold">Grafana / Webhook</text>
+      <text x="707" y="374" text-anchor="middle" fill="#8892a4" font-size="9">Dashboard annotation</text>
+      <text x="707" y="386" text-anchor="middle" fill="#8892a4" font-size="9">Optional alert message</text>
+
+      <!-- Row 1 arrows -->
+      <line x1="170"  y1="57" x2="198"  y2="57" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="350"  y1="57" x2="378"  y2="57" stroke="#4f8ef7" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="535"  y1="57" x2="558"  y2="57" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+      <line x1="710"  y1="57" x2="728"  y2="57" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- Row 1 → Row 2 -->
+      <line x1="785" y1="85"  x2="785" y2="148" stroke="#3ecf8e" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="785" y1="148" x2="97"  y2="148" stroke="#3ecf8e" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="97"  y1="148" x2="97"  y2="178" stroke="#3ecf8e" stroke-width="1.5" marker-end="url(#arr2)"/>
+
+      <!-- Row 2 arrows -->
+      <line x1="175"  y1="207" x2="198"  y2="207" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="355"  y1="207" x2="378"  y2="207" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+      <line x1="535"  y1="207" x2="558"  y2="207" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+      <!-- Row 2 → Row 3 -->
+      <line x1="635" y1="235" x2="635" y2="295" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="635" y1="295" x2="287" y2="295" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="4,3"/>
+      <line x1="287" y1="295" x2="287" y2="333" stroke="#f5a623" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+      <!-- Row 3 arrows -->
+      <line x1="375" y1="362" x2="408" y2="362" stroke="#e05252" stroke-width="1.5" marker-end="url(#arr)"/>
+      <line x1="585" y1="362" x2="618" y2="362" stroke="#e05252" stroke-width="1.5" marker-end="url(#arr)"/>
+    </svg>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 9 -->
+  <h2 id="patterns"><span class="num">9</span> New Pattern Definitions</h2>
+
+  <p>Extend <code>patterns.py</code> with degradation-specific crawl patterns used during the <em>Scan</em> phase to select comparable operating hours:</p>
+
+  <pre><span class="cm"># patterns.py additions — operating conditions for fair comparison</span>
+
+<span class="st">"steady_mid_load"</span>: {
+    <span class="st">"description"</span>: <span class="st">"Stable mid-load operation: 800–1500 kW, wind 7–11 m/s, low variability."</span>,
+    <span class="st">"columns"</span>: [<span class="st">"Power (kW)"</span>, <span class="st">"Wind speed (m/s)"</span>,
+               <span class="st">"Generator bearing front temperature (°C)"</span>,
+               <span class="st">"Generator bearing rear temperature (°C)"</span>,
+               <span class="st">"Gear oil temperature (°C)"</span>,
+               <span class="st">"Front bearing temperature (°C)"</span>,
+               <span class="st">"Stator temperature 1 (°C)"</span>,
+               <span class="st">"Nacelle ambient temperature (°C)"</span>],
+    <span class="st">"min_rows"</span>: <span class="num">4</span>,
+    <span class="st">"criteria"</span>: [
+        {<span class="st">"column"</span>: <span class="st">"Power (kW)"</span>,       <span class="st">"agg"</span>: <span class="st">"mean"</span>, <span class="st">"min"</span>: <span class="num">800</span>,  <span class="st">"max"</span>: <span class="num">1500</span>},
+        {<span class="st">"column"</span>: <span class="st">"Power (kW)"</span>,       <span class="st">"agg"</span>: <span class="st">"std"</span>,  <span class="st">"min"</span>: <span class="nb">None</span>, <span class="st">"max"</span>: <span class="num">80</span>},
+        {<span class="st">"column"</span>: <span class="st">"Wind speed (m/s)"</span>, <span class="st">"agg"</span>: <span class="st">"mean"</span>, <span class="st">"min"</span>: <span class="num">7</span>,    <span class="st">"max"</span>: <span class="num">11</span>},
+    ],
+},
+
+<span class="st">"steady_rated"</span>: {
+    <span class="st">"description"</span>: <span class="st">"Turbine at rated power (≥2000 kW), very stable. Best for generator/gearbox temps."</span>,
+    <span class="st">"columns"</span>: [<span class="st">"Power (kW)"</span>, <span class="st">"Wind speed (m/s)"</span>,
+               <span class="st">"Generator bearing front temperature (°C)"</span>,
+               <span class="st">"Generator bearing rear temperature (°C)"</span>,
+               <span class="st">"Gear oil temperature (°C)"</span>,
+               <span class="st">"Stator temperature 1 (°C)"</span>,
+               <span class="st">"Nacelle ambient temperature (°C)"</span>],
+    <span class="st">"min_rows"</span>: <span class="num">4</span>,
+    <span class="st">"criteria"</span>: [
+        {<span class="st">"column"</span>: <span class="st">"Power (kW)"</span>, <span class="st">"agg"</span>: <span class="st">"mean"</span>, <span class="st">"min"</span>: <span class="num">2000</span>, <span class="st">"max"</span>: <span class="nb">None</span>},
+        {<span class="st">"column"</span>: <span class="st">"Power (kW)"</span>, <span class="st">"agg"</span>: <span class="st">"std"</span>,  <span class="st">"min"</span>: <span class="nb">None</span>, <span class="st">"max"</span>: <span class="num">60</span>},
+    ],
+}</pre>
+
+  <!-- ══════════════════════════════════════════════════════ 10 -->
+  <h2 id="implementation"><span class="num">10</span> Implementation Guide</h2>
+
+  <h3>File structure to create</h3>
+  <pre>crawler/
+  degradation/
+    __init__.py
+    baseline.py        <span class="cm"># Phase 1: crawl + store T_baseline per turbine per bin</span>
+    scan.py            <span class="cm"># Phase 2: crawl new months, compute ΔT, stream to JSONL</span>
+    service_mask.py    <span class="cm"># Phase 3: fetch events, build masked date sets</span>
+    drift_detect.py    <span class="cm"># Phase 4: rolling window, flag drifts</span>
+    alert.py           <span class="cm"># Phase 5: write JSONL, push to Loki</span>
+    baseline.db        <span class="cm"># SQLite, auto-created</span>
+    results/
+      degradation_alerts.jsonl
+      residuals/
+        kelmarsh_turbine_1.jsonl   <span class="cm"># one file per turbine</span>
+        ...</pre>
+
+  <h3>baseline.py — core logic sketch</h3>
+  <pre><span class="kw">import</span> sqlite3, json
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+TEMP_COLS = [
+    <span class="st">"Generator bearing front temperature (°C)"</span>,
+    <span class="st">"Generator bearing rear temperature (°C)"</span>,
+    <span class="st">"Gear oil temperature (°C)"</span>,
+    <span class="st">"Front bearing temperature (°C)"</span>,
+    <span class="st">"Rear bearing temperature (°C)"</span>,
+    <span class="st">"Stator temperature 1 (°C)"</span>,
+    <span class="st">"Nacelle temperature (°C)"</span>,
+]
+COND_COLS = [
+    <span class="st">"Wind speed (m/s)"</span>,
+    <span class="st">"Power (kW)"</span>,
+    <span class="st">"Nacelle ambient temperature (°C)"</span>,
+]
+
+<span class="kw">def</span> <span class="fn">build_baseline</span>(api_base, farm, turbine, start_date, end_date, mask_windows, db_path):
+    session = requests.Session()
+    <span class="cm"># bin_accum: bin_key → {col → [values]}</span>
+    bin_accum = defaultdict(<span class="kw">lambda</span>: defaultdict(<span class="nb">list</span>))
+
+    d = start_date
+    <span class="kw">while</span> d <= end_date:
+        <span class="kw">if</span> is_masked(d, mask_windows):
+            d += timedelta(days=<span class="num">1</span>); <span class="kw">continue</span>
+
+        <span class="kw">for</span> hour <span class="kw">in</span> <span class="nb">range</span>(<span class="num">24</span>):
+            data = fetch_hour_data(session, api_base, farm, turbine,
+                                   d.isoformat(), hour,
+                                   TEMP_COLS + COND_COLS)
+            <span class="kw">if not</span> data <span class="kw">or</span> <span class="nb">len</span>(data[<span class="st">"rows"</span>]) &lt; <span class="num">4</span>:
+                <span class="kw">continue</span>
+            wind    = _mean(_col_values(data, <span class="st">"Wind speed (m/s)"</span>))
+            power   = _mean(_col_values(data, <span class="st">"Power (kW)"</span>))
+            ambient = _mean(_col_values(data, <span class="st">"Nacelle ambient temperature (°C)"</span>))
+            <span class="kw">if</span> <span class="nb">any</span>(v <span class="kw">is None for</span> v <span class="kw">in</span> [wind, power, ambient]):
+                <span class="kw">continue</span>
+            b = get_bin(wind, power, ambient)
+            <span class="kw">for</span> col <span class="kw">in</span> TEMP_COLS:
+                vals = _col_values(data, col)
+                <span class="kw">if</span> vals:
+                    bin_accum[b][col].extend(vals)
+        d += timedelta(days=<span class="num">1</span>)
+
+    <span class="cm"># Compute means, save to SQLite</span>
+    conn = sqlite3.connect(db_path)
+    conn.execute(<span class="st">"""CREATE TABLE IF NOT EXISTS baseline
+                    (farm TEXT, turbine TEXT, bin TEXT, col TEXT, mean REAL, n INT)"""</span>)
+    <span class="kw">for</span> b, cols <span class="kw">in</span> bin_accum.items():
+        <span class="kw">for</span> col, vals <span class="kw">in</span> cols.items():
+            <span class="kw">if</span> <span class="nb">len</span>(vals) >= <span class="num">10</span>:
+                conn.execute(<span class="st">"INSERT OR REPLACE INTO baseline VALUES (?,?,?,?,?,?)"</span>,
+                             (farm, turbine, b, col, sum(vals)/<span class="nb">len</span>(vals), <span class="nb">len</span>(vals)))
+    conn.commit(); conn.close()</pre>
+
+  <h3>drift_detect.py — sliding window flag</h3>
+  <pre><span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="kw">def</span> <span class="fn">detect_drift</span>(residuals: <span class="nb">list</span>[<span class="nb">dict</span>], window_days=<span class="num">30</span>,
+                  warn_threshold=<span class="num">3.0</span>, crit_threshold=<span class="num">5.0</span>):
+    <span class="cm">"""
+    residuals: sorted list of {date, hour, col, delta_t}
+    Returns list of alert dicts.
+    """</span>
+    alerts = []
+    <span class="kw">from</span> itertools <span class="kw">import</span> groupby
+    <span class="cm"># Group by column, then slide a 30-day window</span>
+    <span class="kw">for</span> col, rows <span class="kw">in</span> groupby(residuals, key=<span class="kw">lambda</span> r: r[<span class="st">"col"</span>]):
+        rows = <span class="nb">list</span>(rows)
+        <span class="kw">for</span> i, row <span class="kw">in</span> <span class="nb">enumerate</span>(rows):
+            window = [r[<span class="st">"delta_t"</span>] <span class="kw">for</span> r <span class="kw">in</span> rows[<span class="nb">max</span>(<span class="num">0</span>, i-<span class="num">72</span>):i+<span class="num">1</span>]]
+            <span class="kw">if</span> <span class="nb">len</span>(window) &lt; <span class="num">12</span>:  <span class="cm"># need at least 12 comparable hours</span>
+                <span class="kw">continue</span>
+            mean30 = sum(window) / <span class="nb">len</span>(window)
+            <span class="kw">if</span> mean30 >= crit_threshold:
+                alerts.append({<span class="st">"severity"</span>: <span class="st">"CRITICAL"</span>, <span class="st">"col"</span>: col,
+                                <span class="st">"date"</span>: row[<span class="st">"date"</span>], <span class="st">"mean_delta"</span>: <span class="nb">round</span>(mean30, <span class="num">2</span>)})
+            <span class="kw">elif</span> mean30 >= warn_threshold:
+                alerts.append({<span class="st">"severity"</span>: <span class="st">"WARNING"</span>, <span class="st">"col"</span>: col,
+                                <span class="st">"date"</span>: row[<span class="st">"date"</span>], <span class="st">"mean_delta"</span>: <span class="nb">round</span>(mean30, <span class="num">2</span>)})
+    <span class="kw">return</span> alerts</pre>
+
+  <!-- ══════════════════════════════════════════════════════ 11 -->
+  <h2 id="output"><span class="num">11</span> Output Schema</h2>
+
+  <h3>residuals JSONL — one line per turbine per hour</h3>
+  <pre>{
+  <span class="st">"farm"</span>:    <span class="st">"kelmarsh"</span>,
+  <span class="st">"turbine"</span>: <span class="st">"turbine_2"</span>,
+  <span class="st">"date"</span>:    <span class="st">"2020-03-15"</span>,
+  <span class="st">"hour"</span>:    <span class="num">14</span>,
+  <span class="st">"op_bin"</span>:  <span class="st">"(9-11, 1500-2000, 10-20)"</span>,
+  <span class="st">"deltas"</span>: {
+    <span class="st">"Generator bearing front temperature (°C)"</span>: <span class="num">2.3</span>,
+    <span class="st">"Generator bearing rear temperature (°C)"</span>:  <span class="num">1.9</span>,
+    <span class="st">"Gear oil temperature (°C)"</span>:               <span class="num">0.7</span>,
+    <span class="st">"Stator temperature 1 (°C)"</span>:               <span class="num">3.1</span>
+  },
+  <span class="st">"wind_mean"</span>:    <span class="num">10.2</span>,
+  <span class="st">"power_mean"</span>:   <span class="num">1734</span>,
+  <span class="st">"ambient_mean"</span>: <span class="num">13.4</span>,
+  <span class="st">"timestamp_utc"</span>: <span class="st">"2026-05-15T10:00:00Z"</span>
+}</pre>
+
+  <h3>degradation_alerts JSONL — one line per drift event</h3>
+  <pre>{
+  <span class="st">"farm"</span>:       <span class="st">"kelmarsh"</span>,
+  <span class="st">"turbine"</span>:    <span class="st">"turbine_2"</span>,
+  <span class="st">"component"</span>:  <span class="st">"Generator bearing front temperature (°C)"</span>,
+  <span class="st">"severity"</span>:   <span class="st">"WARNING"</span>,
+  <span class="st">"date"</span>:       <span class="st">"2020-04-10"</span>,
+  <span class="st">"mean_delta_t"</span>: <span class="num">3.7</span>,
+  <span class="st">"window_days"</span>:  <span class="num">30</span>,
+  <span class="st">"baseline_end"</span>: <span class="st">"2019-06-30"</span>,
+  <span class="st">"timestamp_utc"</span>: <span class="st">"2026-05-15T10:00:00Z"</span>
+}</pre>
+
+  <!-- ══════════════════════════════════════════════════════ 12 -->
+  <h2 id="limits"><span class="num">12</span> Limitations &amp; Gotchas</h2>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong>Kelmarsh column inconsistency:</strong> Some temperature columns are absent or
+    labelled differently across turbines (same issue seen with RPM columns in the existing crawler).
+    Use <code>column_candidates</code> and validate values fall in physical ranges
+    (e.g. bearing temps should be 20–100 °C; reject if mean is −999 or 0).
+  </div>
+
+  <table>
+    <thead><tr><th>Issue</th><th>Impact</th><th>Mitigation</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Short baseline period</td>
+        <td>Sparse bins → low confidence baselines</td>
+        <td>Require ≥ 10 obs per bin; skip sparse bins</td>
+      </tr>
+      <tr>
+        <td>Sensor drift / recalibration</td>
+        <td>Apparent ΔT even without degradation</td>
+        <td>Compare against farm-average; flag outlier turbines only</td>
+      </tr>
+      <tr>
+        <td>Seasonal effects not fully captured by ambient bin</td>
+        <td>Winter vs summer baseline mismatch</td>
+        <td>Add month-of-year as a 4th binning dimension (4 seasons)</td>
+      </tr>
+      <tr>
+        <td>Missing service records</td>
+        <td>Post-repair temperature drop looks like negative drift</td>
+        <td>Flag sustained negative drift too — may indicate a recent repair</td>
+      </tr>
+      <tr>
+        <td>10-min SCADA averages smooth transients</td>
+        <td>Early-stage failures with short-duration spikes are missed</td>
+        <td>Watch <code>Power, Standard deviation</code> and vibration columns alongside temperature</td>
+      </tr>
+      <tr>
+        <td>API rate limits on Render free tier (cold starts)</td>
+        <td>Slow crawl during baseline phase (years of data)</td>
+        <td>Run baseline build once locally against local API, upload baseline.db</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-green">
+    ✅ <strong>Typical result to expect:</strong> On a 5-year dataset like Kelmarsh (2016–2021),
+    a degrading generator bearing typically shows a sustained ΔT of +4–8 °C in the 3–6 months
+    before an alarm is logged in the status data. This crawler would have flagged it 90–180 days
+    before the reactive alarm — enough time to schedule a planned maintenance visit.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 13 -->
+  <h2 id="deployment"><span class="num">13</span> Deployment on Raspberry Pi &amp; Bare-Metal / VM Hosts</h2>
+
+  <h3>13.1 Target Architecture</h3>
+  <p>
+    The crawler is designed to run on a small cluster of low-cost edge nodes.
+    The reference setup is <strong>four Raspberry Pi 3B+</strong> computers, but the same
+    approach scales to any number of bare-metal servers or virtual machines.
+  </p>
+
+  <table>
+    <thead><tr><th>Design principle</th><th>Rationale</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Fully independent processes per node</strong></td>
+        <td>
+          One Pi occasionally breaks or reboots.
+          Each node runs its own cron/timer job and writes to its own local SQLite database.
+          A failing node does not block the others — it simply resumes at the next
+          scheduled run once it is back online.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>No shared state between nodes</strong></td>
+        <td>
+          Nodes do <em>not</em> need a shared filesystem or a distributed lock.
+          Each node is assigned a disjoint subset of turbines (or a single farm)
+          via an environment variable or a config file written during installation.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Auto-update before every crawl run</strong></td>
+        <td>
+          Before executing the crawler, the runner script checks whether a newer
+          commit exists on the configured GitHub branch.  If one exists it pulls it
+          and restarts the script automatically.  No manual SSH is needed to deploy
+          a code change — just <code>git push</code> from your laptop.
+        </td>
+      </tr>
+      <tr>
+        <td><strong>Horizontal scaling</strong></td>
+        <td>
+          Adding capacity is a matter of running the same installer against a new IP.
+          The node receives its turbine assignment as part of the installation step.
+          Works equally well on bare-metal Linux boxes and on cloud/on-prem VMs.
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>13.2 Remote Installer Script</h3>
+  <p>
+    <code>deploy_to_node.sh</code> — run once from your laptop to set up a fresh node.
+    Requires only the node's IP address, SSH password (or key path), and the turbine
+    assignment for that node.
+  </p>
+
+  <div class="alert alert-blue">
+    💡 <strong>Dependencies on the control machine:</strong>
+    <code>ssh</code>, <code>sshpass</code> (for password-based auth), and <code>git</code>.
+    On macOS install <code>sshpass</code> via <code>brew install hudochenkov/sshpass/sshpass</code>;
+    on Linux use <code>apt install sshpass</code>.
+  </div>
+
+  <pre><code>#!/usr/bin/env bash
+# deploy_to_node.sh  —  one-shot remote installer
+# Usage:  ./deploy_to_node.sh  &lt;HOST_IP&gt;  &lt;SSH_PASSWORD&gt;  [TURBINE_IDS]
+# Example: ./deploy_to_node.sh 192.168.1.42 raspberry "T01,T02,T03"
+set -euo pipefail
+
+HOST="${1:?Usage: $0 HOST_IP SSH_PASSWORD [TURBINE_IDS]}"
+PASS="${2:?}"
+TURBINES="${3:-ALL}"                   # comma-separated turbine IDs or ALL
+REPO="https://github.com/YOUR_ORG/winddataAPI.git"
+BRANCH="main"
+INSTALL_DIR="/opt/winddataAPI"
+SERVICE="windcrawler"
+SSH_OPTS="-o StrictHostKeyChecking=no"
+
+ssh_run() {
+  sshpass -p "$PASS" ssh $SSH_OPTS "pi@${HOST}" "$@"
+}
+
+echo "==> Installing on ${HOST} (turbines: ${TURBINES})"
+
+# 1. System packages
+ssh_run "sudo apt-get update -q && \
+  sudo apt-get install -y git python3-pip python3-venv sqlite3"
+
+# 2. Clone / update repo
+ssh_run "
+  if [ -d '${INSTALL_DIR}/.git' ]; then
+    cd ${INSTALL_DIR} && git fetch origin && git reset --hard origin/${BRANCH}
+  else
+    sudo git clone --branch ${BRANCH} ${REPO} ${INSTALL_DIR}
+    sudo chown -R pi:pi ${INSTALL_DIR}
+  fi
+"
+
+# 3. Python virtual-env + dependencies
+ssh_run "
+  python3 -m venv ${INSTALL_DIR}/.venv
+  ${INSTALL_DIR}/.venv/bin/pip install -q --upgrade pip
+  ${INSTALL_DIR}/.venv/bin/pip install -q -r ${INSTALL_DIR}/crawler/requirements.txt
+"
+
+# 4. Write per-node config
+ssh_run "cat > ${INSTALL_DIR}/crawler/node_config.env &lt;&lt;'EOF'
+TURBINE_IDS=${TURBINES}
+REPO_BRANCH=${BRANCH}
+EOF"
+
+# 5. Install systemd timer (runs every full hour)
+ssh_run "sudo tee /etc/systemd/system/${SERVICE}.service &gt; /dev/null &lt;&lt;'EOF'
+[Unit]
+Description=Wind Degradation Crawler
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=pi
+WorkingDirectory=${INSTALL_DIR}
+EnvironmentFile=${INSTALL_DIR}/crawler/node_config.env
+ExecStart=${INSTALL_DIR}/crawler/run_with_update.sh
+StandardOutput=append:/var/log/${SERVICE}.log
+StandardError=append:/var/log/${SERVICE}.err
+EOF"
+
+ssh_run "sudo tee /etc/systemd/system/${SERVICE}.timer &gt; /dev/null &lt;&lt;'EOF'
+[Unit]
+Description=Run Wind Degradation Crawler every hour
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=120
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+EOF"
+
+ssh_run "sudo systemctl daemon-reload && \
+  sudo systemctl enable --now ${SERVICE}.timer"
+
+echo "==> Done.  Check status on ${HOST}:"
+echo "    sshpass -p '${PASS}' ssh pi@${HOST} 'systemctl status ${SERVICE}.timer'"
+</code></pre>
+
+  <h3>13.3 Auto-Update Runner Script</h3>
+  <p>
+    <code>crawler/run_with_update.sh</code> — executed by systemd before every crawl.
+    It compares the local commit to the upstream branch; if they differ it pulls the
+    new code and re-executes itself so the <em>new</em> version is what actually runs.
+  </p>
+
+  <pre><code>#!/usr/bin/env bash
+# crawler/run_with_update.sh
+# Checks GitHub for a newer version, pulls if available, then runs the crawler.
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_DIR="$(dirname "$SCRIPT_DIR")"
+BRANCH="${REPO_BRANCH:-main}"
+VENV="${REPO_DIR}/.venv/bin/python"
+LOG="/var/log/windcrawler.log"
+
+log() { echo "[$(date -Iseconds)] $*" | tee -a "$LOG"; }
+
+# ── 1. Check for upstream changes ──────────────────────────────────────────
+cd "$REPO_DIR"
+git fetch origin "$BRANCH" --quiet
+
+LOCAL_SHA=$(git rev-parse HEAD)
+REMOTE_SHA=$(git rev-parse "origin/${BRANCH}")
+
+if [ "$LOCAL_SHA" != "$REMOTE_SHA" ]; then
+  log "New version detected (${LOCAL_SHA:0:7} → ${REMOTE_SHA:0:7}). Updating …"
+  git reset --hard "origin/${BRANCH}"
+  "${REPO_DIR}/.venv/bin/pip" install -q --upgrade -r "${REPO_DIR}/crawler/requirements.txt"
+  log "Update complete. Re-executing with new code …"
+  # Re-exec so the new script version is what runs
+  exec bash "${BASH_SOURCE[0]}" "$@"
+fi
+
+log "Code is up-to-date (${LOCAL_SHA:0:7}). Starting crawler …"
+
+# ── 2. Run the crawler ──────────────────────────────────────────────────────
+# Pass the turbine filter from the environment (set by systemd EnvironmentFile)
+"$VENV" "${REPO_DIR}/crawler/run_next_hour.py" \
+  --turbines "${TURBINE_IDS:-ALL}" \
+  2&gt;&amp;1 | tee -a "$LOG"
+
+log "Crawler run finished."
+</code></pre>
+
+  <table>
+    <thead><tr><th>Step</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><code>git fetch origin</code></td>
+        <td>Downloads remote refs without changing working tree — safe, fast, offline-harmless if it fails.</td>
+      </tr>
+      <tr>
+        <td>SHA comparison</td>
+        <td>Compares local <code>HEAD</code> to <code>origin/main</code>. No network call needed after the fetch.</td>
+      </tr>
+      <tr>
+        <td><code>git reset --hard</code></td>
+        <td>Applies the new code atomically; discards any local drift.</td>
+      </tr>
+      <tr>
+        <td><code>exec bash …</code></td>
+        <td>Replaces the current process with a fresh execution of the (now updated) script.
+            systemd sees no difference — the same PID tree continues.</td>
+      </tr>
+      <tr>
+        <td>No update path</td>
+        <td>Script proceeds directly to the crawler call — zero overhead when nothing changed.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>13.4 Scaling Beyond Four Raspberry Pis</h3>
+  <p>
+    The deployment model is stateless and identical across hardware classes:
+  </p>
+  <ul>
+    <li>
+      <strong>More Raspberry Pis</strong> — run <code>deploy_to_node.sh</code> with a new IP and
+      a different <code>TURBINE_IDS</code> slice.  No changes to any existing node.
+    </li>
+    <li>
+      <strong>Bare-metal Linux servers</strong> — same script; swap <code>pi</code> user for
+      your actual username via an environment variable (<code>REMOTE_USER=ubuntu ./deploy_to_node.sh …</code>).
+    </li>
+    <li>
+      <strong>Virtual machines (cloud or on-prem)</strong> — use SSH key-based auth instead of
+      <code>sshpass</code> by passing <code>-i ~/.ssh/id_rsa</code> in the ssh commands;
+      remove the <code>sshpass</code> wrapper.  The rest of the script is identical.
+    </li>
+    <li>
+      <strong>Container / Kubernetes path</strong> — package the virtualenv and
+      <code>run_with_update.sh</code> into a Docker image.  The auto-update step is replaced
+      by a standard image pull in a CronJob spec.  Turbine assignment becomes a K8s
+      <code>ConfigMap</code> or environment variable in the pod spec.
+    </li>
+  </ul>
+
+  <div class="alert alert-green">
+    ✅ <strong>Fault-tolerance summary:</strong> Because every node runs its own independent
+    hourly timer and writes to its own local SQLite file, a node that crashes or is powered
+    off simply misses those hours and resumes automatically on next boot.  There is no
+    leader-election, no distributed lock, and no single point of failure.  If a Pi
+    permanently breaks, re-run <code>deploy_to_node.sh</code> against the replacement
+    hardware — the node will pull the latest code, receive its turbine assignment, and start
+    crawling within two minutes.
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════ 14 -->
+  <h2 id="monitoring"><span class="num">14</span> Grafana Fleet Monitoring</h2>
+
+  <p>
+    The degradation crawler runs as a distributed, long-running background process across
+    multiple nodes. Grafana is the operational hub: operators must be able to see — in a
+    single dashboard — which machines are running, how long each run takes, which turbines
+    have been processed, and when a node silently drops out. All observability flows through
+    <strong>structured JSON logs → Grafana Loki → Grafana panels queried with LogQL</strong>.
+    No separate metrics infrastructure (Prometheus, exporters) is needed.
+  </p>
+
+  <h3>14.1 Structured Logging with Machine Identity</h3>
+  <p>
+    Every log line must carry the node's identity so that a single Loki query can split
+    results by machine. The node name is read from an environment variable set during
+    installation, falling back to the OS hostname. A short <strong>run ID</strong> groups
+    all log lines from one scheduled execution so you can see exactly how many turbines a
+    single invocation processed — and at what speed.
+  </p>
+  <p>Add the module below to the project and import it throughout the crawler:</p>
+
+  <pre><span class="cm"># crawler/machine_logger.py</span>
+<span class="kw">import</span> os, socket, uuid, time, json, requests
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+MACHINE_ID = os.environ.get(<span class="st">"MACHINE_ID"</span>, socket.gethostname())   <span class="cm"># e.g. "pi-1"</span>
+LOKI_URL   = os.environ.get(<span class="st">"LOKI_URL"</span>, <span class="st">""</span>)                       <span class="cm"># e.g. "http://grafana-host:3100"</span>
+RUN_ID     = str(uuid.uuid4())[:8]                                 <span class="cm"># unique per scheduling invocation</span>
+
+<span class="kw">try</span>:
+    <span class="kw">import</span> subprocess
+    CODE_SHA = subprocess.check_output(
+        [<span class="st">"git"</span>, <span class="st">"rev-parse"</span>, <span class="st">"--short"</span>, <span class="st">"HEAD"</span>], stderr=subprocess.DEVNULL
+    ).decode().strip()
+<span class="kw">except</span> Exception:
+    CODE_SHA = <span class="st">"unknown"</span>
+
+<span class="kw">def</span> <span class="fn">_now</span>() -> str:
+    <span class="kw">return</span> datetime.now(timezone.utc).isoformat(timespec=<span class="st">"seconds"</span>)
+
+<span class="kw">def</span> <span class="fn">log</span>(level: str, event: str, **fields):
+    <span class="cm">"""Emit a structured JSON log line and push it to Loki (best-effort)."""</span>
+    entry = {
+        <span class="st">"ts"</span>:      _now(),
+        <span class="st">"level"</span>:   level,
+        <span class="st">"event"</span>:   event,
+        <span class="st">"machine"</span>: MACHINE_ID,
+        <span class="st">"run_id"</span>:  RUN_ID,
+        <span class="st">"sha"</span>:     CODE_SHA,
+        **fields,
+    }
+    print(json.dumps(entry), flush=<span class="nb">True</span>)   <span class="cm"># systemd captures stdout → journal / log file</span>
+    _push_loki(entry)
+
+<span class="kw">def</span> <span class="fn">_push_loki</span>(entry: dict):
+    <span class="kw">if not</span> LOKI_URL:
+        <span class="kw">return</span>
+    payload = {
+        <span class="st">"streams"</span>: [{
+            <span class="st">"stream"</span>: {
+                <span class="st">"job"</span>:     <span class="st">"windcrawler"</span>,
+                <span class="st">"machine"</span>: MACHINE_ID,
+                <span class="st">"level"</span>:   entry[<span class="st">"level"</span>],
+            },
+            <span class="st">"values"</span>: [[str(int(time.time() * 1_000_000_000)), json.dumps(entry)]]
+        }]
+    }
+    <span class="kw">try</span>:
+        requests.post(<span class="nb">f</span><span class="st">"{LOKI_URL}/loki/api/v1/push"</span>, json=payload, timeout=<span class="num">4</span>)
+    <span class="kw">except</span> Exception:
+        <span class="kw">pass</span>   <span class="cm"># monitoring must never crash the crawler</span></pre>
+
+  <div class="alert alert-blue">
+    💡 <strong>node_config.env update:</strong> Add <code>MACHINE_ID=pi-1</code> and
+    <code>LOKI_URL=http://&lt;grafana-host&gt;:3100</code> to each node's
+    <code>crawler/node_config.env</code> during the installation step in
+    <code>deploy_to_node.sh</code> (§ 13.2).  Each Pi gets a unique <code>MACHINE_ID</code>
+    (e.g. <code>pi-1</code> … <code>pi-4</code>); the Loki URL is the same for all.
+  </div>
+
+  <h3>14.2 Heartbeat Protocol</h3>
+  <p>
+    Each crawl run emits a <strong>start heartbeat</strong> as its very first action and an
+    <strong>end heartbeat</strong> as its last. The time between these two events is the run
+    duration. Grafana alerts if no start heartbeat has been received from a machine within
+    <strong>90 minutes</strong> — meaning one full scheduled run was missed entirely, which
+    is the dropout signal.
+  </p>
+
+  <pre><span class="kw">from</span> crawler.machine_logger <span class="kw">import</span> log, CODE_SHA
+
+<span class="kw">def</span> <span class="fn">run_crawler</span>(turbines: list, farm: str):
+    t_start = time.time()
+
+    <span class="cm"># ── Heartbeat: run started ───────────────────────────────────────</span>
+    log(<span class="st">"INFO"</span>, <span class="st">"heartbeat_start"</span>,
+        farm=farm, turbine_count=len(turbines), sha=CODE_SHA)
+
+    errors = 0
+    rows_total = 0
+
+    <span class="kw">for</span> turbine <span class="kw">in</span> turbines:
+        t0 = time.time()
+        <span class="kw">try</span>:
+            rows = crawl_turbine(farm, turbine)   <span class="cm"># existing function</span>
+            rows_total += rows
+            log(<span class="st">"INFO"</span>, <span class="st">"turbine_done"</span>,
+                farm=farm, turbine=turbine, rows=rows,
+                duration_s=<span class="nb">round</span>(time.time() - t0, <span class="num">1</span>))
+        <span class="kw">except</span> Exception <span class="kw">as</span> exc:
+            errors += <span class="num">1</span>
+            log(<span class="st">"ERROR"</span>, <span class="st">"turbine_failed"</span>,
+                farm=farm, turbine=turbine, error=<span class="nb">str</span>(exc))
+
+    <span class="cm"># ── Heartbeat: run finished ──────────────────────────────────────</span>
+    log(<span class="st">"INFO"</span>, <span class="st">"heartbeat_end"</span>,
+        farm=farm, turbines_processed=len(turbines),
+        rows_total=rows_total, errors=errors,
+        duration_s=<span class="nb">round</span>(time.time() - t_start, <span class="num">1</span>))</pre>
+
+  <h3>14.3 Loki Label Strategy</h3>
+  <p>
+    Loki stores labels on each log stream and indexes them for fast filtering. Keep the
+    label set small — only fields used as stream selectors. All other fields belong
+    <em>inside</em> the JSON line body, parsed at query time with <code>| json</code>.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Loki label</th><th>Example values</th><th>Purpose</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>job</code></td>
+        <td><code>windcrawler</code></td>
+        <td>Top-level namespace for all crawler streams; prefix for every dashboard query</td>
+      </tr>
+      <tr>
+        <td><code>machine</code></td>
+        <td><code>pi-1</code>, <code>pi-2</code>, <code>vm-01</code></td>
+        <td>Filter or split by individual node; primary field for dropout detection and timeline panels</td>
+      </tr>
+      <tr>
+        <td><code>level</code></td>
+        <td><code>INFO</code>, <code>WARNING</code>, <code>ERROR</code></td>
+        <td>Quick cardinality filter; drives the "error rate" time-series panel</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong>Avoid high-cardinality labels:</strong> Do <em>not</em> put
+    <code>turbine</code>, <code>farm</code>, <code>run_id</code>, or <code>date</code>
+    as Loki <em>labels</em> — this creates thousands of streams and degrades Loki
+    performance significantly. These must live <strong>inside the JSON log line</strong>
+    where LogQL's <code>| json</code> parser extracts them as needed.
+  </div>
+
+  <h3>14.4 Standard Log Event Reference</h3>
+
+  <table>
+    <thead>
+      <tr><th>event</th><th>level</th><th>When emitted</th><th>Key JSON fields</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>heartbeat_start</code></td><td class="good">INFO</td>
+        <td>First action of every scheduled crawl run</td>
+        <td><code>farm, turbine_count, sha</code></td>
+      </tr>
+      <tr>
+        <td><code>heartbeat_end</code></td><td class="good">INFO</td>
+        <td>Last action after all turbines complete</td>
+        <td><code>farm, turbines_processed, rows_total, errors, duration_s</code></td>
+      </tr>
+      <tr>
+        <td><code>turbine_done</code></td><td class="good">INFO</td>
+        <td>After each turbine is successfully processed</td>
+        <td><code>farm, turbine, rows, duration_s</code></td>
+      </tr>
+      <tr>
+        <td><code>turbine_failed</code></td><td class="bad">ERROR</td>
+        <td>A turbine crawl raised an unhandled exception</td>
+        <td><code>farm, turbine, error</code></td>
+      </tr>
+      <tr>
+        <td><code>api_retry</code></td><td class="warn">WARNING</td>
+        <td>API call failed; retrying with exponential back-off</td>
+        <td><code>url, attempt, status_code, wait_s</code></td>
+      </tr>
+      <tr>
+        <td><code>code_updated</code></td><td class="good">INFO</td>
+        <td>Emitted by <code>run_with_update.sh</code> after a successful git pull</td>
+        <td><code>old_sha, new_sha</code></td>
+      </tr>
+      <tr>
+        <td><code>baseline_built</code></td><td class="good">INFO</td>
+        <td>Baseline crawl completed for one turbine</td>
+        <td><code>farm, turbine, bins_populated, obs_total</code></td>
+      </tr>
+      <tr>
+        <td><code>drift_alert</code></td><td class="warn">WARNING</td>
+        <td>Drift detector crossed a threshold; pushed to alerts JSONL</td>
+        <td><code>farm, turbine, component, severity, mean_delta</code></td>
+      </tr>
+      <tr>
+        <td><code>data_gap</code></td><td class="warn">WARNING</td>
+        <td>Expected SCADA data for a date range is absent from the API</td>
+        <td><code>farm, turbine, date_start, date_end, gap_days</code></td>
+      </tr>
+      <tr>
+        <td><code>db_size</code></td><td class="good">INFO</td>
+        <td>Emitted once per run, reports local SQLite sizes</td>
+        <td><code>baseline_db_mb, residuals_mb, alerts_count</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>14.5 Grafana Dashboard Layout</h3>
+  <p>
+    The recommended dashboard has four rows: a <strong>fleet health summary</strong>
+    (stat panels), a <strong>machine activity timeline</strong> (state timeline),
+    <strong>performance charts</strong>, and an <strong>operational detail</strong> row.
+    Panel LogQL queries are listed in <a href="#panel-queries">§ 14.6</a>.
+  </p>
+
+  <div class="arch-wrap" style="padding:10px; overflow-x:auto;">
+    <svg viewBox="0 0 1000 580" width="100%" xmlns="http://www.w3.org/2000/svg"
+         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
+      <!-- ── Grafana dark background ─────────────────────────────── -->
+      <rect width="1000" height="580" fill="#161719"/>
+
+      <!-- ── Title bar ──────────────────────────────────────────── -->
+      <rect width="1000" height="38" fill="#0a0b0d"/>
+      <text x="16" y="24" fill="#ccccdc" font-size="13" font-weight="bold">🖥  Crawler Fleet Monitor</text>
+      <text x="984" y="24" text-anchor="end" fill="#5794f2" font-size="11">windcrawler  ●  30 s refresh  ●  Live</text>
+      <line x1="0" y1="38" x2="1000" y2="38" stroke="#2c2f33" stroke-width="1"/>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- ROW 1 — four stat panels  (y=46, h=100)                 -->
+      <!-- ════════════════════════════════════════════════════════ -->
+
+      <!-- Panel 1: Active Machines (x=10) -->
+      <rect x="10" y="46" width="239" height="100" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="10" y="46" width="239" height="22"  fill="#272b3c"/>
+      <text x="20" y="62"  fill="#9fa7b3" font-size="10" font-weight="600">ACTIVE MACHINES</text>
+      <text x="129" y="118" text-anchor="middle" fill="#73bf69" font-size="42" font-weight="bold">3 / 4</text>
+      <text x="129" y="135" text-anchor="middle" fill="#e05252" font-size="9">● pi-2 offline  (last seen 6 h ago)</text>
+
+      <!-- Panel 2: Fleet Uptime 7d (x=257) -->
+      <rect x="257" y="46" width="239" height="100" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="257" y="46" width="239" height="22"  fill="#272b3c"/>
+      <text x="267" y="62"  fill="#9fa7b3" font-size="10" font-weight="600">FLEET UPTIME  (7 d)</text>
+      <text x="376" y="118" text-anchor="middle" fill="#5794f2" font-size="42" font-weight="bold">94.2%</text>
+      <text x="376" y="135" text-anchor="middle" fill="#9fa7b3" font-size="9">target  ≥ 95 %</text>
+
+      <!-- Panel 3: Avg Run Duration (x=504) -->
+      <rect x="504" y="46" width="239" height="100" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="504" y="46" width="239" height="22"  fill="#272b3c"/>
+      <text x="514" y="62"  fill="#9fa7b3" font-size="10" font-weight="600">AVG RUN DURATION</text>
+      <text x="623" y="118" text-anchor="middle" fill="#cccccc" font-size="42" font-weight="bold">8m 32s</text>
+      <text x="623" y="135" text-anchor="middle" fill="#9fa7b3" font-size="9">across all online nodes</text>
+
+      <!-- Panel 4: Last Heartbeat (x=751) -->
+      <rect x="751" y="46" width="239" height="100" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="751" y="46" width="239" height="22"  fill="#272b3c"/>
+      <text x="761" y="62"  fill="#9fa7b3" font-size="10" font-weight="600">LAST HEARTBEAT  (any node)</text>
+      <text x="870" y="112" text-anchor="middle" fill="#73bf69" font-size="38" font-weight="bold">12s ago</text>
+      <text x="870" y="131" text-anchor="middle" fill="#73bf69" font-size="10">● pi-3</text>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- ROW 2 — Machine Activity Timeline  (y=154, h=135)       -->
+      <!-- ════════════════════════════════════════════════════════ -->
+      <rect x="10" y="154" width="980" height="135" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="10" y="154" width="980" height="22"  fill="#272b3c"/>
+      <text x="20" y="170" fill="#9fa7b3" font-size="10" font-weight="600">MACHINE ACTIVITY TIMELINE  —  past 24 hours</text>
+
+      <!-- Legend (top-right) -->
+      <rect x="820" y="157" width="10" height="8" fill="#73bf69" opacity="0.8"/>
+      <text x="833" y="165" fill="#9fa7b3" font-size="8.5">Running</text>
+      <rect x="869" y="157" width="10" height="8" fill="#5794f2"/>
+      <text x="882" y="165" fill="#9fa7b3" font-size="8.5">Updating</text>
+      <rect x="925" y="157" width="10" height="8" fill="#f5a623" opacity="0.85"/>
+      <text x="938" y="165" fill="#9fa7b3" font-size="8.5">Warn</text>
+      <rect x="963" y="157" width="10" height="8" fill="#e05252" opacity="0.85"/>
+      <text x="976" y="165" fill="#9fa7b3" font-size="8.5">Off</text>
+
+      <!-- Machine name labels (right-aligned at x=84) -->
+      <text x="84" y="193" fill="#cccccc" font-size="9.5" text-anchor="end">pi-1</text>
+      <text x="84" y="215" fill="#cccccc" font-size="9.5" text-anchor="end">pi-2</text>
+      <text x="84" y="237" fill="#cccccc" font-size="9.5" text-anchor="end">pi-3</text>
+      <text x="84" y="259" fill="#cccccc" font-size="9.5" text-anchor="end">pi-4</text>
+
+      <!-- Timeline: x=88 (24h ago) → x=985 (now), px-per-hour≈37.4 -->
+
+      <!-- pi-1: 2h offline → 12h running → 0.5h update → 9.5h running -->
+      <rect x="88"  y="183" width="75"  height="17" rx="2" fill="#35373d"/>
+      <rect x="163" y="183" width="449" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+      <rect x="612" y="183" width="19"  height="17" rx="2" fill="#5794f2"/>
+      <rect x="631" y="183" width="354" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+
+      <!-- pi-2: 8h running → 6h offline → 10h running -->
+      <rect x="88"  y="205" width="299" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+      <rect x="387" y="205" width="224" height="17" rx="2" fill="#e05252" opacity="0.85"/>
+      <rect x="611" y="205" width="374" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+
+      <!-- pi-3: all running (24h) -->
+      <rect x="88"  y="227" width="897" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+
+      <!-- pi-4: 20h running → 1h warning → 3h running -->
+      <rect x="88"  y="249" width="748" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+      <rect x="836" y="249" width="37"  height="17" rx="2" fill="#f5a623" opacity="0.85"/>
+      <rect x="873" y="249" width="112" height="17" rx="2" fill="#73bf69" opacity="0.75"/>
+
+      <!-- Time axis labels -->
+      <text x="88"  y="279" fill="#6e7280" font-size="8.5" text-anchor="middle">24h ago</text>
+      <text x="312" y="279" fill="#6e7280" font-size="8.5" text-anchor="middle">18h ago</text>
+      <text x="537" y="279" fill="#6e7280" font-size="8.5" text-anchor="middle">12h ago</text>
+      <text x="761" y="279" fill="#6e7280" font-size="8.5" text-anchor="middle">6h ago</text>
+      <text x="985" y="279" fill="#6e7280" font-size="8.5" text-anchor="end">now</text>
+      <!-- Tick marks -->
+      <line x1="88"  y1="269" x2="88"  y2="275" stroke="#6e7280" stroke-width="1"/>
+      <line x1="312" y1="269" x2="312" y2="275" stroke="#6e7280" stroke-width="1"/>
+      <line x1="537" y1="269" x2="537" y2="275" stroke="#6e7280" stroke-width="1"/>
+      <line x1="761" y1="269" x2="761" y2="275" stroke="#6e7280" stroke-width="1"/>
+      <line x1="985" y1="269" x2="985" y2="275" stroke="#6e7280" stroke-width="1"/>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- ROW 3 — Performance panels  (y=297, h=128)              -->
+      <!-- ════════════════════════════════════════════════════════ -->
+
+      <!-- Panel 3-1: API Error Rate % (x=10) -->
+      <rect x="10" y="297" width="321" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="10" y="297" width="321" height="22"  fill="#272b3c"/>
+      <text x="20" y="313" fill="#9fa7b3" font-size="10" font-weight="600">API ERROR RATE %  by machine</text>
+      <!-- Axis -->
+      <line x1="32"  y1="317" x2="32"  y2="414" stroke="#3a3e48" stroke-width="1"/>
+      <line x1="32"  y1="414" x2="322" y2="414" stroke="#3a3e48" stroke-width="1"/>
+      <text x="29"  y="320" fill="#6e7280" font-size="7.5" text-anchor="end">20%</text>
+      <text x="29"  y="367" fill="#6e7280" font-size="7.5" text-anchor="end">10%</text>
+      <text x="29"  y="414" fill="#6e7280" font-size="7.5" text-anchor="end">0%</text>
+      <!-- Near-zero line with pi-2 reconnection spike -->
+      <polyline points="34,413 70,412 100,413 125,412 140,412 155,408 165,372 172,340 180,338 188,355 198,395 210,412 240,411 270,413 310,412 322,413"
+                fill="none" stroke="#e05252" stroke-width="1.5" opacity="0.85"/>
+      <polyline points="34,413 70,412 100,413 125,412 155,413 196,412 240,411 270,413 310,412 322,413"
+                fill="none" stroke="#73bf69" stroke-width="1.5" opacity="0.75"/>
+      <text x="175" y="332" fill="#e05252" font-size="7.5">pi-2 reconnect spike</text>
+      <text x="264" y="408" fill="#73bf69"  font-size="7.5">pi-1/3/4 ≈ 0.3%</text>
+
+      <!-- Panel 3-2: Rows Fetched / Run (x=339) -->
+      <rect x="339" y="297" width="321" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="339" y="297" width="321" height="22"  fill="#272b3c"/>
+      <text x="349" y="313" fill="#9fa7b3" font-size="10" font-weight="600">ROWS FETCHED  —  last run per node</text>
+      <!-- Bar chart: pi-1 3840, pi-2 2100 (offline gap), pi-3 4120, pi-4 3967 -->
+      <line x1="355" y1="410" x2="645" y2="410" stroke="#3a3e48" stroke-width="1"/>
+      <!-- pi-1 bar (blue, h=74) -->
+      <rect x="360" y="336" width="52" height="74" rx="2" fill="#5794f2" opacity="0.8"/>
+      <text x="386" y="331" text-anchor="middle" fill="#9fa7b3" font-size="7.5">3 840</text>
+      <text x="386" y="422" text-anchor="middle" fill="#9fa7b3" font-size="8">pi-1</text>
+      <!-- pi-2 bar (orange, h=41 — less due to offline gap) -->
+      <rect x="430" y="369" width="52" height="41" rx="2" fill="#f5a623" opacity="0.8"/>
+      <text x="456" y="364" text-anchor="middle" fill="#9fa7b3" font-size="7.5">2 100</text>
+      <text x="456" y="422" text-anchor="middle" fill="#f5a623" font-size="8">pi-2 ⚠</text>
+      <!-- pi-3 bar (green, h=80) -->
+      <rect x="500" y="330" width="52" height="80" rx="2" fill="#73bf69" opacity="0.8"/>
+      <text x="526" y="325" text-anchor="middle" fill="#9fa7b3" font-size="7.5">4 120</text>
+      <text x="526" y="422" text-anchor="middle" fill="#9fa7b3" font-size="8">pi-3</text>
+      <!-- pi-4 bar (green, h=77) -->
+      <rect x="570" y="333" width="52" height="77" rx="2" fill="#73bf69" opacity="0.8"/>
+      <text x="596" y="328" text-anchor="middle" fill="#9fa7b3" font-size="7.5">3 967</text>
+      <text x="596" y="422" text-anchor="middle" fill="#9fa7b3" font-size="8">pi-4</text>
+
+      <!-- Panel 3-3: Drift Alerts Today (x=668) -->
+      <rect x="668" y="297" width="322" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="668" y="297" width="322" height="22"  fill="#272b3c"/>
+      <text x="678" y="313" fill="#9fa7b3" font-size="10" font-weight="600">DRIFT ALERTS TODAY</text>
+      <text x="829" y="385" text-anchor="middle" fill="#f5a623" font-size="52" font-weight="bold">2</text>
+      <text x="829" y="405" text-anchor="middle" fill="#f5a623" font-size="10">2 × WARNING   |   0 × CRITICAL</text>
+
+      <!-- ════════════════════════════════════════════════════════ -->
+      <!-- ROW 4 — Operational detail  (y=433, h=128)              -->
+      <!-- ════════════════════════════════════════════════════════ -->
+
+      <!-- Panel 4-1: Git Version per Machine (x=10) -->
+      <rect x="10" y="433" width="321" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="10" y="433" width="321" height="22"  fill="#272b3c"/>
+      <text x="20" y="449" fill="#9fa7b3" font-size="10" font-weight="600">GIT VERSION PER MACHINE</text>
+      <text x="20"  y="463" fill="#6e7280" font-size="8.5">Machine</text>
+      <text x="95"  y="463" fill="#6e7280" font-size="8.5">Commit</text>
+      <text x="190" y="463" fill="#6e7280" font-size="8.5">Deployed</text>
+      <line x1="14" y1="465" x2="326" y2="465" stroke="#2c2f33" stroke-width="1"/>
+      <text x="20"  y="478" fill="#cccccc" font-size="9">pi-1</text>
+      <text x="95"  y="478" fill="#3ecf8e" font-size="9" font-family="monospace">a4f8c21</text>
+      <text x="190" y="478" fill="#9fa7b3" font-size="9">2 h ago</text>
+      <text x="20"  y="492" fill="#cccccc" font-size="9">pi-2</text>
+      <text x="95"  y="492" fill="#3ecf8e" font-size="9" font-family="monospace">a4f8c21</text>
+      <text x="190" y="492" fill="#9fa7b3" font-size="9">2 h ago</text>
+      <text x="20"  y="506" fill="#cccccc" font-size="9">pi-3</text>
+      <text x="95"  y="506" fill="#3ecf8e" font-size="9" font-family="monospace">a4f8c21</text>
+      <text x="190" y="506" fill="#9fa7b3" font-size="9">2 h ago</text>
+      <text x="20"  y="520" fill="#cccccc" font-size="9">pi-4</text>
+      <text x="95"  y="520" fill="#f5a623" font-size="9" font-family="monospace">3b2e109</text>
+      <text x="190" y="520" fill="#f5a623" font-size="9">18 h ago ⚠ stale</text>
+
+      <!-- Panel 4-2: Data Freshness (x=339) -->
+      <rect x="339" y="433" width="321" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="339" y="433" width="321" height="22"  fill="#272b3c"/>
+      <text x="349" y="449" fill="#9fa7b3" font-size="10" font-weight="600">DATA FRESHNESS  (newest crawled date)</text>
+      <text x="349" y="471" fill="#6e7280"  font-size="8.5">Farm</text>
+      <text x="440" y="471" fill="#6e7280"  font-size="8.5">Newest date</text>
+      <text x="555" y="471" fill="#6e7280"  font-size="8.5">Lag</text>
+      <line x1="343" y1="473" x2="655" y2="473" stroke="#2c2f33" stroke-width="1"/>
+      <text x="349" y="488" fill="#cccccc"  font-size="9">kelmarsh</text>
+      <text x="440" y="488" fill="#cccccc"  font-size="9" font-family="monospace">2021-07-01</text>
+      <text x="555" y="488" fill="#73bf69"  font-size="9">0 d  ✓</text>
+      <text x="349" y="504" fill="#cccccc"  font-size="9">penmanshiel</text>
+      <text x="440" y="504" fill="#cccccc"  font-size="9" font-family="monospace">2021-06-28</text>
+      <text x="555" y="504" fill="#73bf69"  font-size="9">3 d  ✓</text>
+      <text x="349" y="524" fill="#9fa7b3"  font-size="8">Total rows in DB:</text>
+      <text x="460" y="524" fill="#5794f2"  font-size="9" font-weight="600">1 423 516</text>
+      <text x="349" y="538" fill="#9fa7b3"  font-size="8">Baseline bins populated:</text>
+      <text x="490" y="538" fill="#5794f2"  font-size="9" font-weight="600">42 187 / 21 turbines</text>
+
+      <!-- Panel 4-3: Crawl Rate (x=668) -->
+      <rect x="668" y="433" width="322" height="128" rx="4" fill="#1f2023" stroke="#2c2f33"/>
+      <rect x="668" y="433" width="322" height="22"  fill="#272b3c"/>
+      <text x="678" y="449" fill="#9fa7b3" font-size="10" font-weight="600">CRAWL RATE  (rows / min)</text>
+      <text x="829" y="510" text-anchor="middle" fill="#cccccc" font-size="46" font-weight="bold">342</text>
+      <text x="829" y="528" text-anchor="middle" fill="#9fa7b3" font-size="10">rows / min  ·  avg last 24 h</text>
+      <!-- mini sparkline -->
+      <polyline points="680,548 695,546 710,544 725,548 740,542 755,540 770,539 785,541 800,538 815,536 830,540 845,537 860,535 875,538 890,534 905,537 920,534 935,535 950,537 960,535 975,538"
+                fill="none" stroke="#5794f2" stroke-width="1.5" opacity="0.8"/>
+
+      <!-- Row annotations -->
+      <text x="10"  y="295" fill="#4a4e5a" font-size="8" font-style="italic">▸ Row 3 — Performance  (LogQL metric queries)</text>
+      <text x="10"  y="431" fill="#4a4e5a" font-size="8" font-style="italic">▸ Row 4 — Operational detail  (LogQL log queries)</text>
+
+    </svg>
+  </div>
+
+  <h3 id="panel-queries">14.6 Panel Definitions &amp; LogQL Queries</h3>
+
+  <table>
+    <thead>
+      <tr><th>Panel</th><th>Type</th><th>LogQL / query</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Active Machines</strong></td>
+        <td>Stat</td>
+        <td><code>count(sum by(machine)(count_over_time({job="windcrawler",level="INFO"}|json|event="heartbeat_start"[90m]))&gt;0)</code>
+        — fires once per unique machine that has sent a start-heartbeat in the last 90 min.</td>
+      </tr>
+      <tr>
+        <td><strong>Fleet Uptime 7 d</strong></td>
+        <td>Stat</td>
+        <td>Derived metric: <em>expected runs = machines × 24 × 7</em> vs
+        <code>count_over_time({job="windcrawler"}|json|event="heartbeat_end"[7d])</code>
+        — ratio gives uptime %.</td>
+      </tr>
+      <tr>
+        <td><strong>Avg Run Duration</strong></td>
+        <td>Stat</td>
+        <td><code>{job="windcrawler"}|json|event="heartbeat_end"|unwrap duration_s[1h]|avg_over_time</code>
+        — uses the <code>duration_s</code> field logged by <code>heartbeat_end</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Last Heartbeat</strong></td>
+        <td>Stat</td>
+        <td>Logs panel showing the most recent <code>heartbeat_start</code> line across all machines.
+        Grafana shows "time since" automatically when the time field is selected.</td>
+      </tr>
+      <tr>
+        <td><strong>Machine Activity Timeline</strong></td>
+        <td>State Timeline</td>
+        <td><code>{job="windcrawler"}|json|event=~"heartbeat_start|heartbeat_end|turbine_failed"</code>
+        — split by <code>machine</code> label; map <code>heartbeat_start→green</code>,
+        <code>heartbeat_end→grey</code>, <code>turbine_failed→red</code>.
+        Absence of any event for &gt;90 min shows as a gap (offline).</td>
+      </tr>
+      <tr>
+        <td><strong>API Error Rate %</strong></td>
+        <td>Time Series</td>
+        <td><code>sum by(machine)(rate({job="windcrawler",level="ERROR"}[5m])) / sum by(machine)(rate({job="windcrawler"}[5m])) * 100</code>
+        — split by machine to identify which node is struggling.</td>
+      </tr>
+      <tr>
+        <td><strong>Rows Fetched / Run</strong></td>
+        <td>Bar Chart</td>
+        <td><code>sum by(machine)(sum_over_time({job="windcrawler"}|json|event="heartbeat_end"|unwrap rows_total[1h]))</code>
+        — one bar per machine per hour; low bars indicate missed turbines.</td>
+      </tr>
+      <tr>
+        <td><strong>Drift Alerts Today</strong></td>
+        <td>Stat</td>
+        <td><code>count_over_time({job="windcrawler"}|json|event="drift_alert"[24h])</code>
+        — threshold colours: 0=green, 1–2=yellow, 3+=red.</td>
+      </tr>
+      <tr>
+        <td><strong>Git Version per Machine</strong></td>
+        <td>Table</td>
+        <td><code>{job="windcrawler"}|json|event="heartbeat_start"</code> — last value per machine,
+        display <code>machine</code>, <code>sha</code>, and timestamp. Highlight rows where SHA
+        differs from the majority SHA (stale node).</td>
+      </tr>
+      <tr>
+        <td><strong>Data Freshness</strong></td>
+        <td>Table</td>
+        <td><code>{job="windcrawler"}|json|event="heartbeat_end"</code> — last <code>farm</code>
+        and <code>latest_date_crawled</code> fields; compare against <em>today − 1</em> to compute lag.</td>
+      </tr>
+      <tr>
+        <td><strong>Crawl Rate (rows/min)</strong></td>
+        <td>Stat + Sparkline</td>
+        <td><code>sum(rate({job="windcrawler"}|json|event="turbine_done"|unwrap rows[5m]))</code>
+        — aggregate across all machines; sparkline over 24 h shows throughput pattern.</td>
+      </tr>
+      <tr>
+        <td><strong>Data Gaps Detected</strong></td>
+        <td>Time Series</td>
+        <td><code>count_over_time({job="windcrawler"}|json|event="data_gap"[1h])</code> by farm
+        — spikes indicate periods where the source API was returning empty data.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>14.7 Additional Metrics to Monitor</h3>
+
+  <p>Beyond the primary dashboard rows, the following metrics provide deeper insight
+  into process health and data quality:</p>
+
+  <div class="grid3">
+    <div class="card">
+      <h4>🖥️ Node Health</h4>
+      <ul>
+        <li><strong>CPU / memory use</strong> — high values during crawl reveal Pi throttling</li>
+        <li><strong>Disk use</strong> — SQLite + JSONL files grow continuously; alert at 80 %</li>
+        <li><strong>SD card write rate</strong> — Raspberry Pi SD cards wear; log <code>db_size_mb</code> per run</li>
+        <li><strong>Systemd timer drift</strong> — <code>RandomizedDelaySec</code> spread vs. expected cadence</li>
+        <li><strong>Boot count</strong> — frequent reboots indicate power-supply instability</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>📡 API &amp; Network</h4>
+      <ul>
+        <li><strong>API response time</strong> — log <code>api_latency_ms</code> per request; cold-start spikes on Render free tier</li>
+        <li><strong>Retry count per run</strong> — sum of <code>api_retry</code> events; elevated = unstable upstream</li>
+        <li><strong>HTTP 429 / 503 rate</strong> — throttling signals; trigger back-off tuning</li>
+        <li><strong>DNS resolution failures</strong> — off-site API unreachable (Pi behind NAT/proxy)</li>
+        <li><strong>Bytes transferred per run</strong> — anomalous drops indicate partial responses</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>📊 Data Quality</h4>
+      <ul>
+        <li><strong>Rows skipped (out-of-range)</strong> — bearing temps outside 5–120 °C flagged as sensor noise</li>
+        <li><strong>Bins with &lt; 10 obs</strong> — sparse baseline bins; log <code>bins_skipped</code> in <code>baseline_built</code></li>
+        <li><strong>Negative ΔT events</strong> — sustained drops may indicate undocumented repairs</li>
+        <li><strong>Turbine coverage %</strong> — (<code>turbines_processed / total_turbines</code>) per run; drops flag assignment bugs</li>
+        <li><strong>Gap days per turbine</strong> — from <code>data_gap</code> events; detect systematic source gaps</li>
+      </ul>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:0;">
+    <div class="card">
+      <h4>🔄 Deployment &amp; Version</h4>
+      <ul>
+        <li><strong>Version skew across nodes</strong> — machines on different commit SHAs; alert after &gt; 2 h at mismatched versions</li>
+        <li><strong>Update frequency</strong> — count of <code>code_updated</code> events; sudden spike = rapid hot-fix cycle</li>
+        <li><strong>Pip install duration</strong> — logged inside <code>run_with_update.sh</code>; slow installs indicate network congestion</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🌡️ Degradation Pipeline</h4>
+      <ul>
+        <li><strong>Drift alerts by severity over time</strong> — WARNING→CRITICAL escalations signal imminent failure</li>
+        <li><strong>Mean ΔT by turbine/component</strong> — heatmap panel (turbines as rows, months as columns)</li>
+        <li><strong>Baseline build completion</strong> — how many turbines have a valid baseline vs. still building</li>
+        <li><strong>Alert → service-event lag</strong> — compare drift alert date to next IEC "R" event; measures prediction lead time</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>14.8 Grafana Alert Rules</h3>
+
+  <table>
+    <thead>
+      <tr><th>Alert name</th><th>Condition</th><th>Severity</th><th>Recommended action</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Machine Dropout</strong></td>
+        <td>No <code>heartbeat_start</code> from a machine for &gt; 90 min</td>
+        <td class="bad">CRITICAL</td>
+        <td>SSH to the Pi; check <code>systemctl status windcrawler.timer</code>. If unreachable, check power supply.</td>
+      </tr>
+      <tr>
+        <td><strong>High API Error Rate</strong></td>
+        <td>Error rate &gt; 10 % on any node over 15 min</td>
+        <td class="warn">WARNING</td>
+        <td>Check upstream API health; inspect <code>api_retry</code> log events for HTTP status codes.</td>
+      </tr>
+      <tr>
+        <td><strong>Node Version Skew</strong></td>
+        <td>Any node running a SHA different from the majority SHA for &gt; 2 h</td>
+        <td class="warn">WARNING</td>
+        <td>SSH to stale node; verify internet connectivity and git access. Trigger manual <code>git pull</code> if needed.</td>
+      </tr>
+      <tr>
+        <td><strong>Long Run Duration</strong></td>
+        <td>Run duration &gt; 45 min (normal is 5–15 min)</td>
+        <td class="warn">WARNING</td>
+        <td>Check API latency; the upstream Render instance may be cold-starting. Consider keeping the API warm.</td>
+      </tr>
+      <tr>
+        <td><strong>Low Crawl Coverage</strong></td>
+        <td><code>turbines_processed / expected</code> &lt; 80 % in a run</td>
+        <td class="warn">WARNING</td>
+        <td>Check <code>turbine_failed</code> log events for the specific turbine and error message.</td>
+      </tr>
+      <tr>
+        <td><strong>Disk Near Full</strong></td>
+        <td><code>db_size_mb</code> &gt; 80 % of estimated SD card capacity</td>
+        <td class="warn">WARNING</td>
+        <td>Archive old residuals JSONL files; consider monthly rotation to a network share or cloud storage.</td>
+      </tr>
+      <tr>
+        <td><strong>Drift Alert Escalation</strong></td>
+        <td>Same turbine + component produces a CRITICAL drift alert twice within 7 days</td>
+        <td class="bad">CRITICAL</td>
+        <td>Manually inspect ΔT trend in Grafana; schedule an inspection visit within 30 days.</td>
+      </tr>
+      <tr>
+        <td><strong>All Machines Simultaneously Down</strong></td>
+        <td>No <code>heartbeat_start</code> from <em>any</em> machine for &gt; 2 h</td>
+        <td class="bad">CRITICAL</td>
+        <td>Check shared dependencies — network router, DHCP, or the upstream API itself may be the failure point.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-green">
+    ✅ <strong>Setup checklist:</strong>
+    1) Add <code>MACHINE_ID</code> and <code>LOKI_URL</code> to <code>node_config.env</code> during deployment (§ 13.2).
+    2) Import <code>machine_logger.log</code> at the top of <code>run_next_hour.py</code> and wrap the main loop with heartbeats (§ 14.2).
+    3) Create a Loki data source in Grafana pointing at <code>http://localhost:3100</code>.
+    4) Import the dashboard and wire each panel to the LogQL queries in § 14.6.
+    5) Set up the eight alert rules in § 14.8 with a notification channel (email / Slack / webhook).
+    With these in place, you have full visibility into which nodes are active, how long each run takes,
+    when a machine dropped out, and what the data quality looks like — all from one Grafana screen.
+  </div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════════════════ 15 -->
+  <h2 id="results"><span class="num">15</span> Result Classification — Evidence of Degradation vs. Healthy Operation</h2>
+
+  <p>
+    The crawler produces two completely separate output streams. A record in the
+    <strong>DEGRADING bin</strong> means evidence of progressive temperature drift was found —
+    and the record documents exactly how strong that evidence is. A record in the
+    <strong>HEALTHY bin</strong> is not silence: it is an explicit, timestamped assertion
+    that a component was assessed and found within normal bounds. Both are stored; both are
+    displayed in Grafana; and the absence of a HEALTHY record for a turbine/component is
+    itself an anomaly (it may mean the crawler has not run or the baseline is incomplete).
+  </p>
+
+  <h3>15.1 The Two Bins and Their Sub-Levels</h3>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>✅ HEALTHY Bin</h4>
+      <p>Emitted at the end of every assessment window where no drift was detected.
+      Contains enough metadata to prove the assessment was based on real, representative data —
+      not silence or missing observations.</p>
+      <ul>
+        <li><strong>HEALTHY</strong> — ΔT mean &lt; 1.5 °C, slope ≈ 0, good coverage</li>
+      </ul>
+      <p>A turbine that has not emitted a HEALTHY record in the last assessment period should
+      appear as <em>grey / unknown</em> in the Grafana heatmap, not green.</p>
+    </div>
+    <div class="card">
+      <h4>⚠️ DEGRADING Bin</h4>
+      <p>Emitted when the drift detector identifies a sustained temperature rise that cannot
+      be explained by operating condition changes alone. Three sub-levels reflect certainty
+      and urgency:</p>
+      <ul>
+        <li><strong>WATCH</strong> — ΔT mean 1.5–3 °C or slope 0.2–0.4 °C/mo. Monitor closely.</li>
+        <li><strong>WARNING</strong> — ΔT mean 3–5 °C or slope &gt; 0.4 °C/mo. Plan inspection.</li>
+        <li><strong>CRITICAL</strong> — ΔT mean &gt; 5 °C. Immediate review; likely within weeks of failure.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>15.2 Evidence Criteria for Degradation</h3>
+  <p>
+    Each criterion is worth between 1 and 2 points. The <strong>evidence score</strong>
+    (0–7) is computed for the assessment window and drives the severity classification.
+    Single-criterion triggers always land at WATCH; multiple corroborated criteria escalate
+    to WARNING or CRITICAL.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Criterion</th><th>Threshold</th><th>Score</th><th>Rationale</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Mean ΔT above WATCH</strong></td>
+        <td>Rolling 30-day mean ΔT &gt; 1.5 °C</td>
+        <td class="warn">+1</td>
+        <td>Temperature is persistently elevated above baseline; too early to alarm but worth watching</td>
+      </tr>
+      <tr>
+        <td><strong>Mean ΔT above WARNING</strong></td>
+        <td>Rolling 30-day mean ΔT &gt; 3.0 °C</td>
+        <td class="warn">+2</td>
+        <td>Substantial sustained excess heat; historically correlates with 90-day failure window in Kelmarsh data</td>
+      </tr>
+      <tr>
+        <td><strong>Positive slope sustained</strong></td>
+        <td>Linear slope of 90-day ΔT &gt; 0.3 °C/month</td>
+        <td class="warn">+1</td>
+        <td>Drift is not static noise — it is <em>accelerating</em> or at least monotonically increasing</td>
+      </tr>
+      <tr>
+        <td><strong>Sigma exceedance</strong></td>
+        <td>Mean ΔT &gt; 2σ above the baseline distribution for this bin</td>
+        <td class="warn">+1</td>
+        <td>Mean is statistically unusual even after accounting for normal bin-level variance</td>
+      </tr>
+      <tr>
+        <td><strong>Multi-sensor corroboration</strong></td>
+        <td>≥ 1 other temperature sensor on the same component or drivetrain also has score ≥ 1</td>
+        <td class="bad">+2</td>
+        <td>Single-sensor drift is often sensor noise or miscalibration; two agreeing sensors is strong physical evidence</td>
+      </tr>
+      <tr>
+        <td><strong>Pre-repair temporal match</strong></td>
+        <td>An IEC "R" (repair) event occurs within 90 days after this assessment date</td>
+        <td class="good">+1 (retrospective)</td>
+        <td>Used during baseline validation only — confirms the alert was a true positive; not used in real-time scoring</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-blue">
+    💡 <strong>Score → severity mapping:</strong><br>
+    Score 0 → <span class="pill pill-green">HEALTHY</span> &nbsp;
+    Score 1–2 → <span class="pill pill-orange">WATCH</span> &nbsp;
+    Score 3–4 → <span class="pill pill-orange">WARNING</span> &nbsp;
+    Score 5+ → <span class="pill pill-red">CRITICAL</span> &nbsp;
+    — OR — mean ΔT alone can override: &gt;3°C → WARNING, &gt;5°C → CRITICAL regardless of score.
+  </div>
+
+  <h3>15.3 Evidence Criteria for Healthy Operation</h3>
+  <p>
+    A HEALTHY record is only emitted when <em>all four</em> conditions below are satisfied.
+    This prevents the system from recording "healthy" for a turbine that simply has too few
+    observations to say anything meaningful.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Requirement</th><th>Value</th><th>Why it matters</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Minimum observations</strong></td>
+        <td>≥ 30 comparable hours in the assessment window</td>
+        <td>Fewer than 30 comparable hours in the same operating bin means the mean estimate is unreliable; record is skipped</td>
+      </tr>
+      <tr>
+        <td><strong>Mean ΔT bounded</strong></td>
+        <td>|mean ΔT| &lt; 1.5 °C</td>
+        <td>Mean must be close to baseline — <em>both</em> positive and large negative drift are suspicious</td>
+      </tr>
+      <tr>
+        <td><strong>Slope bounded</strong></td>
+        <td>|slope| &lt; 0.2 °C/month</td>
+        <td>No meaningful trend in either direction; values are stationary around the baseline</td>
+      </tr>
+      <tr>
+        <td><strong>Variance reasonable</strong></td>
+        <td>σ &lt; 3 times the baseline bin σ</td>
+        <td>Unusually high variance in a "healthy" window suggests intermittent faults or sensor noise; better to mark as unknown</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong>Large negative ΔT is also flagged:</strong> If the rolling mean ΔT drops below
+    −2 °C relative to the baseline, a <code>WATCH</code> record is still written to the
+    DEGRADING bin with a <code>"direction": "negative"</code> field. This typically indicates
+    an unreported gearbox oil flush or bearing replacement that reset temperatures without an
+    IEC "R" event — or a sensor failure. It is <em>not</em> safe to classify this as "healthy".
+  </div>
+
+  <h3>15.4 ΔT Time Series — Visual Evidence</h3>
+  <p>
+    The two charts below show what the evidence looks like in practice. Both display the
+    same quantity — the <strong>normalised temperature residual ΔT</strong> per comparable
+    hour (thin line) and the <strong>rolling 30-day mean</strong> (thick line) — but the
+    patterns are unmistakably different.
+  </p>
+
+  <div class="arch-wrap" style="padding:14px 10px;">
+    <svg viewBox="0 0 1000 310" width="100%" xmlns="http://www.w3.org/2000/svg"
+         font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- LEFT PANEL — HEALTHY                                 -->
+      <!-- ════════════════════════════════════════════════════ -->
+      <rect x="2" y="2" width="483" height="303" rx="8" fill="#1a1d27" stroke="#2e3352"/>
+      <!-- Title bar -->
+      <rect x="2" y="2"  width="483" height="27" rx="8" fill="#0f2a1f"/>
+      <rect x="2" y="21" width="483" height="8"  fill="#0f2a1f"/>
+      <text x="14" y="20" fill="#3ecf8e" font-size="12" font-weight="bold">✅ HEALTHY — No Drift Detected</text>
+      <text x="478" y="20" text-anchor="end" fill="#8892a4" font-size="9.5">kelmarsh / turbine_2 / Gen. bearing front temp</text>
+
+      <!-- Threshold colour bands (x=52 to x=472, y=32 to y=267) -->
+      <rect x="52" y="194" width="420" height="44" fill="#3ecf8e" opacity="0.09"/>
+      <rect x="52" y="150" width="420" height="44" fill="#f5e642" opacity="0.07"/>
+      <rect x="52" y="92"  width="420" height="58" fill="#f5a623" opacity="0.07"/>
+      <rect x="52" y="32"  width="420" height="60" fill="#e05252" opacity="0.05"/>
+
+      <!-- Axes -->
+      <line x1="52" y1="32"  x2="52"  y2="267" stroke="#3a3e4a" stroke-width="1"/>
+      <line x1="52" y1="267" x2="472" y2="267" stroke="#3a3e4a" stroke-width="1"/>
+
+      <!-- Threshold dashed lines -->
+      <line x1="52" y1="238" x2="472" y2="238" stroke="#3ecf8e" stroke-width="1"   stroke-dasharray="4,3" opacity="0.65"/>
+      <line x1="52" y1="194" x2="472" y2="194" stroke="#f5e642" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="52" y1="150" x2="472" y2="150" stroke="#f5a623" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="52" y1="92"  x2="472" y2="92"  stroke="#e05252" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+
+      <!-- Y-axis labels -->
+      <text x="49" y="241" fill="#3ecf8e" font-size="8.5" text-anchor="end">0°C</text>
+      <text x="49" y="197" fill="#f5e642" font-size="8.5" text-anchor="end">1.5°C</text>
+      <text x="49" y="153" fill="#f5a623" font-size="8.5" text-anchor="end">3°C</text>
+      <text x="49" y="95"  fill="#e05252" font-size="8.5" text-anchor="end">5°C</text>
+      <text x="22" y="155" fill="#8892a4" font-size="8" text-anchor="middle" transform="rotate(-90,22,155)">ΔT (°C)</text>
+
+      <!-- Zone labels (right side) -->
+      <text x="469" y="220" fill="#3ecf8e" font-size="8" text-anchor="end" opacity="0.85">SAFE</text>
+      <text x="469" y="178" fill="#f5e642" font-size="8" text-anchor="end" opacity="0.85">WATCH</text>
+      <text x="469" y="125" fill="#f5a623" font-size="8" text-anchor="end" opacity="0.85">WARNING</text>
+      <text x="469" y="68"  fill="#e05252" font-size="8" text-anchor="end" opacity="0.85">CRITICAL</text>
+
+      <!-- Individual ΔT observations (thin, scattered around mean) -->
+      <polyline points="52,228 88,224 124,230 160,225 196,221 232,226 268,222 304,228 340,224 376,227 412,221 448,225 472,223"
+                fill="none" stroke="#3ecf8e" stroke-width="1.2" opacity="0.5"/>
+
+      <!-- Rolling 30-day mean — FLAT (ΔT ≈ 0.5°C → y≈224) -->
+      <line x1="52" y1="224" x2="472" y2="224" stroke="#3ecf8e" stroke-width="3" opacity="0.9"/>
+      <text x="262" y="218" fill="#3ecf8e" font-size="9" text-anchor="middle" font-weight="600">30-day mean: +0.5°C (flat)</text>
+
+      <!-- X-axis tick labels -->
+      <text x="52"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 0</text>
+      <text x="157" y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 3</text>
+      <text x="262" y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 6</text>
+      <text x="367" y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 9</text>
+      <text x="472" y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 12</text>
+
+      <!-- Evidence summary bar -->
+      <rect x="7" y="288" width="473" height="13" rx="3" fill="#0d2218"/>
+      <text x="243" y="298" fill="#3ecf8e" font-size="8.5" text-anchor="middle">
+        Evidence score: 0  ·  mean ΔT = +0.5°C  ·  slope = +0.02°C/mo  ·  obs: 847  →  HEALTHY ✓
+      </text>
+
+      <!-- ════════════════════════════════════════════════════ -->
+      <!-- RIGHT PANEL — DEGRADING (WARNING)                    -->
+      <!-- ════════════════════════════════════════════════════ -->
+      <rect x="517" y="2" width="481" height="303" rx="8" fill="#1a1d27" stroke="#2e3352"/>
+      <!-- Title bar -->
+      <rect x="517" y="2"  width="481" height="27" rx="8" fill="#2a1e0f"/>
+      <rect x="517" y="21" width="481" height="8"  fill="#2a1e0f"/>
+      <text x="529" y="20" fill="#f5a623" font-size="12" font-weight="bold">⚠️ DEGRADING — WARNING</text>
+      <text x="992" y="20" text-anchor="end" fill="#8892a4" font-size="9.5">kelmarsh / turbine_2 / Stator temperature 1</text>
+
+      <!-- Threshold colour bands (x=569 to x=989) -->
+      <rect x="569" y="194" width="420" height="44" fill="#3ecf8e" opacity="0.09"/>
+      <rect x="569" y="150" width="420" height="44" fill="#f5e642" opacity="0.09"/>
+      <rect x="569" y="92"  width="420" height="58" fill="#f5a623" opacity="0.12"/>
+      <rect x="569" y="32"  width="420" height="60" fill="#e05252" opacity="0.06"/>
+
+      <!-- Axes -->
+      <line x1="569" y1="32"  x2="569" y2="267" stroke="#3a3e4a" stroke-width="1"/>
+      <line x1="569" y1="267" x2="989" y2="267" stroke="#3a3e4a" stroke-width="1"/>
+
+      <!-- Threshold dashed lines -->
+      <line x1="569" y1="238" x2="989" y2="238" stroke="#3ecf8e" stroke-width="1"   stroke-dasharray="4,3" opacity="0.65"/>
+      <line x1="569" y1="194" x2="989" y2="194" stroke="#f5e642" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="569" y1="150" x2="989" y2="150" stroke="#f5a623" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.6"/>
+      <line x1="569" y1="92"  x2="989" y2="92"  stroke="#e05252" stroke-width="0.8" stroke-dasharray="4,3" opacity="0.5"/>
+
+      <!-- Y-axis labels -->
+      <text x="566" y="241" fill="#3ecf8e" font-size="8.5" text-anchor="end">0°C</text>
+      <text x="566" y="197" fill="#f5e642" font-size="8.5" text-anchor="end">1.5°C</text>
+      <text x="566" y="153" fill="#f5a623" font-size="8.5" text-anchor="end">3°C</text>
+      <text x="566" y="95"  fill="#e05252" font-size="8.5" text-anchor="end">5°C</text>
+
+      <!-- Zone labels -->
+      <text x="986" y="220" fill="#3ecf8e" font-size="8" text-anchor="end" opacity="0.85">SAFE</text>
+      <text x="986" y="178" fill="#f5e642" font-size="8" text-anchor="end" opacity="0.85">WATCH</text>
+      <text x="986" y="125" fill="#f5a623" font-size="8" text-anchor="end" opacity="0.85">WARNING</text>
+      <text x="986" y="68"  fill="#e05252" font-size="8" text-anchor="end" opacity="0.85">CRITICAL</text>
+
+      <!-- Individual ΔT observations (thin, drifting upward) -->
+      <polyline points="569,237 594,234 619,238 644,232 669,228 694,225 719,220 744,215 769,210 794,202 819,194 844,186 869,175 894,164 919,152 944,139 964,128 984,117 989,114"
+                fill="none" stroke="#f5a623" stroke-width="1.2" opacity="0.5"/>
+
+      <!-- Rolling 30-day mean — UPWARD TREND -->
+      <polyline points="569,237 604,235 644,231 684,225 724,216 764,205 804,192 844,176 884,159 924,140 964,121 984,112 989,110"
+                fill="none" stroke="#f5a623" stroke-width="3" opacity="0.95"/>
+
+      <!-- WATCH threshold crossing vertical marker (x≈804, M7) -->
+      <line x1="804" y1="32" x2="804" y2="267" stroke="#f5e642" stroke-width="1" stroke-dasharray="3,3" opacity="0.85"/>
+      <text x="807" y="46"  fill="#f5e642" font-size="8.5" font-weight="bold">WATCH</text>
+      <text x="807" y="56"  fill="#f5e642" font-size="7.5">M 6.5 →</text>
+
+      <!-- WARNING threshold crossing vertical marker (x≈904, M9.5) -->
+      <line x1="904" y1="32" x2="904" y2="267" stroke="#f5a623" stroke-width="1.5" stroke-dasharray="3,3" opacity="0.9"/>
+      <text x="907" y="46"  fill="#f5a623" font-size="8.5" font-weight="bold">WARNING</text>
+      <text x="907" y="56"  fill="#f5a623" font-size="7.5">M 9 →</text>
+
+      <!-- Slope annotation (midpoint of trend) -->
+      <text x="736" y="191" fill="#cccccc" font-size="8.5" text-anchor="middle" opacity="0.85">+0.4°C / mo</text>
+      <line x1="684" y1="197" x2="784" y2="188" stroke="#cccccc" stroke-width="0.8" opacity="0.5" stroke-dasharray="2,2"/>
+
+      <!-- IEC R event marker (repair logged at M11.5, x=965) -->
+      <line x1="964" y1="55" x2="964" y2="267" stroke="#c792ea" stroke-width="1.5" stroke-dasharray="2,3" opacity="0.8"/>
+      <polygon points="964,60 972,78 956,78" fill="#c792ea" opacity="0.85"/>
+      <text x="964" y="52" fill="#c792ea" font-size="8.5" text-anchor="middle" font-weight="600">IEC R</text>
+      <text x="964" y="41" fill="#c792ea" font-size="7.5" text-anchor="middle">Repair logged</text>
+
+      <!-- X-axis labels -->
+      <text x="569"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 0</text>
+      <text x="674"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 3</text>
+      <text x="779"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 6</text>
+      <text x="884"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 9</text>
+      <text x="989"  y="280" fill="#6e7280" font-size="8.5" text-anchor="middle">M 12</text>
+
+      <!-- Evidence summary bar -->
+      <rect x="522" y="288" width="471" height="13" rx="3" fill="#2a1e0f"/>
+      <text x="757" y="298" fill="#f5a623" font-size="8.5" text-anchor="middle">
+        Evidence score: 3  ·  mean ΔT = +3.7°C  ·  slope = +0.4°C/mo  ·  obs: 612  →  WARNING ⚠
+      </text>
+
+    </svg>
+  </div>
+
+  <h3>15.5 Classification Algorithm</h3>
+  <p>
+    Add <code>classify_window()</code> to <code>crawler/degradation/drift_detect.py</code>.
+    Each call evaluates one turbine–component pair over an assessment window and returns a
+    single <code>AssessmentRecord</code> that goes into either the HEALTHY or DEGRADING
+    output file.
+  </p>
+
+  <pre><span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass, asdict
+<span class="kw">from</span> typing <span class="kw">import</span> Literal, Optional
+<span class="kw">from</span> datetime <span class="kw">import</span> datetime, timezone
+
+@dataclass
+<span class="kw">class</span> <span class="fn">AssessmentRecord</span>:
+    farm:             str
+    turbine:          str
+    component:        str
+    bin:              Literal[<span class="st">"HEALTHY"</span>, <span class="st">"DEGRADING"</span>]
+    severity:         Literal[<span class="st">"HEALTHY"</span>, <span class="st">"WATCH"</span>, <span class="st">"WARNING"</span>, <span class="st">"CRITICAL"</span>]
+    period_start:     str
+    period_end:       str
+    mean_delta_t:     float    <span class="cm"># rolling-window mean ΔT (°C)</span>
+    sigma:            float    <span class="cm"># std-dev of ΔT in this window</span>
+    slope_per_month:  float    <span class="cm"># linear slope (°C per month)</span>
+    observations:     int      <span class="cm"># comparable-hours count</span>
+    evidence_score:   int      <span class="cm"># 0–7</span>
+    corroborated_by:  list     <span class="cm"># other components that also flagged</span>
+    direction:        str      <span class="cm"># "positive" | "negative" | "stable"</span>
+    timestamp_utc:    str
+
+<span class="kw">def</span> <span class="fn">classify_window</span>(
+    residuals:        list[dict],   <span class="cm"># [{date, delta_t}, …] sorted by date</span>
+    farm:             str,
+    turbine:          str,
+    component:        str,
+    period_start:     str,
+    period_end:       str,
+    watch_thr:        float = <span class="num">1.5</span>,
+    warn_thr:         float = <span class="num">3.0</span>,
+    crit_thr:         float = <span class="num">5.0</span>,
+    slope_watch:      float = <span class="num">0.20</span>,  <span class="cm"># °C/month</span>
+    slope_warn:       float = <span class="num">0.40</span>,
+    min_obs:          int   = <span class="num">30</span>,
+    baseline_sigma:   float = <span class="nb">None</span>,  <span class="cm"># if provided, enables σ-exceedance check</span>
+) -> Optional[AssessmentRecord]:
+    <span class="cm">"""
+    Classify one turbine/component window.
+    Returns None if insufficient data — caller must treat that as UNKNOWN.
+    """</span>
+    <span class="kw">if</span> <span class="nb">len</span>(residuals) &lt; min_obs:
+        <span class="kw">return</span> <span class="nb">None</span>
+
+    deltas = [r[<span class="st">"delta_t"</span>] <span class="kw">for</span> r <span class="kw">in</span> residuals]
+    n      = <span class="nb">len</span>(deltas)
+    mean   = <span class="nb">sum</span>(deltas) / n
+    sigma  = (sum((d - mean)**<span class="num">2</span> <span class="kw">for</span> d <span class="kw">in</span> deltas) / n) ** <span class="num">0.5</span>
+
+    <span class="cm"># Linear slope (per observation → converted to per month ≈ 720 obs)</span>
+    xs       = <span class="nb">list</span>(<span class="nb">range</span>(n))
+    x_mean   = (n - <span class="num">1</span>) / <span class="num">2</span>
+    denom    = <span class="nb">sum</span>((x - x_mean)**<span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> xs) <span class="kw">or</span> <span class="num">1e-9</span>
+    slope_mo = (<span class="nb">sum</span>((xs[i] - x_mean) * deltas[i] <span class="kw">for</span> i <span class="kw">in</span> <span class="nb">range</span>(n)) / denom) * <span class="num">720</span>
+
+    <span class="cm"># Score each evidence criterion</span>
+    score = <span class="num">0</span>
+    <span class="kw">if</span>   mean &gt;= crit_thr:   score += <span class="num">2</span>
+    <span class="kw">elif</span> mean &gt;= warn_thr:   score += <span class="num">2</span>
+    <span class="kw">elif</span> mean &gt;= watch_thr:  score += <span class="num">1</span>
+    <span class="kw">if</span>   slope_mo &gt;= slope_warn:  score += <span class="num">1</span>
+    <span class="kw">elif</span> slope_mo &gt;= slope_watch: score += <span class="num">1</span>
+    <span class="kw">if</span> baseline_sigma <span class="kw">and</span> mean &gt; <span class="num">2</span> * baseline_sigma: score += <span class="num">1</span>
+    <span class="cm"># Multi-sensor corroboration added by caller: score += 2</span>
+
+    <span class="cm"># Negative-direction anomaly check</span>
+    direction = <span class="st">"positive"</span> <span class="kw">if</span> mean &gt; <span class="num">0</span> <span class="kw">else</span> (<span class="st">"negative"</span> <span class="kw">if</span> mean &lt; -<span class="num">2.0</span> <span class="kw">else</span> <span class="st">"stable"</span>)
+    <span class="kw">if</span> direction == <span class="st">"negative"</span>:
+        score = <span class="nb">max</span>(score, <span class="num">1</span>)  <span class="cm"># at least WATCH for unexplained negative shift</span>
+
+    <span class="cm"># Severity from score + hard override</span>
+    <span class="kw">if</span>   mean &gt;= crit_thr <span class="kw">or</span> score &gt;= <span class="num">5</span>: severity = <span class="st">"CRITICAL"</span>
+    <span class="kw">elif</span> mean &gt;= warn_thr <span class="kw">or</span> score &gt;= <span class="num">3</span>: severity = <span class="st">"WARNING"</span>
+    <span class="kw">elif</span> mean &gt;= watch_thr <span class="kw">or</span> score &gt;= <span class="num">1</span>: severity = <span class="st">"WATCH"</span>
+    <span class="kw">else</span>:                                    severity = <span class="st">"HEALTHY"</span>
+
+    <span class="kw">return</span> AssessmentRecord(
+        farm=farm, turbine=turbine, component=component,
+        bin=<span class="st">"HEALTHY"</span> <span class="kw">if</span> severity == <span class="st">"HEALTHY"</span> <span class="kw">else</span> <span class="st">"DEGRADING"</span>,
+        severity=severity,
+        period_start=period_start, period_end=period_end,
+        mean_delta_t=<span class="nb">round</span>(mean, <span class="num">2</span>), sigma=<span class="nb">round</span>(sigma, <span class="num">2</span>),
+        slope_per_month=<span class="nb">round</span>(slope_mo, <span class="num">3</span>),
+        observations=n, evidence_score=score,
+        corroborated_by=[], direction=direction,
+        timestamp_utc=datetime.now(timezone.utc).isoformat(timespec=<span class="st">"seconds"</span>),
+    )</pre>
+
+  <h3>15.6 Output Schema — Two Separate JSONL Files</h3>
+
+  <div class="grid2">
+    <div>
+      <p><strong>File:</strong> <code>results/healthy_records.jsonl</code></p>
+      <pre>{
+  <span class="st">"bin"</span>:            <span class="st">"HEALTHY"</span>,
+  <span class="st">"farm"</span>:           <span class="st">"kelmarsh"</span>,
+  <span class="st">"turbine"</span>:        <span class="st">"turbine_2"</span>,
+  <span class="st">"component"</span>:      <span class="st">"Generator bearing front temperature (°C)"</span>,
+  <span class="st">"severity"</span>:       <span class="st">"HEALTHY"</span>,
+  <span class="st">"period_start"</span>:   <span class="st">"2019-07-01"</span>,
+  <span class="st">"period_end"</span>:     <span class="st">"2020-06-30"</span>,
+  <span class="st">"mean_delta_t"</span>:   <span class="num">0.5</span>,
+  <span class="st">"sigma"</span>:          <span class="num">0.8</span>,
+  <span class="st">"slope_per_month"</span>:<span class="num">0.02</span>,
+  <span class="st">"observations"</span>:   <span class="num">847</span>,
+  <span class="st">"evidence_score"</span>: <span class="num">0</span>,
+  <span class="st">"corroborated_by"</span>:[],
+  <span class="st">"direction"</span>:      <span class="st">"stable"</span>,
+  <span class="st">"timestamp_utc"</span>:  <span class="st">"2026-05-19T10:00:00Z"</span>
+}</pre>
+    </div>
+    <div>
+      <p><strong>File:</strong> <code>results/degrading_records.jsonl</code></p>
+      <pre>{
+  <span class="st">"bin"</span>:            <span class="st">"DEGRADING"</span>,
+  <span class="st">"farm"</span>:           <span class="st">"kelmarsh"</span>,
+  <span class="st">"turbine"</span>:        <span class="st">"turbine_2"</span>,
+  <span class="st">"component"</span>:      <span class="st">"Stator temperature 1 (°C)"</span>,
+  <span class="st">"severity"</span>:       <span class="st">"WARNING"</span>,
+  <span class="st">"period_start"</span>:   <span class="st">"2020-01-01"</span>,
+  <span class="st">"period_end"</span>:     <span class="st">"2020-07-15"</span>,
+  <span class="st">"mean_delta_t"</span>:   <span class="num">3.7</span>,
+  <span class="st">"sigma"</span>:          <span class="num">1.2</span>,
+  <span class="st">"slope_per_month"</span>:<span class="num">0.4</span>,
+  <span class="st">"observations"</span>:   <span class="num">612</span>,
+  <span class="st">"evidence_score"</span>: <span class="num">3</span>,
+  <span class="st">"corroborated_by"</span>:[
+    <span class="st">"Generator bearing front temperature (°C)"</span>,
+    <span class="st">"Generator bearing rear temperature (°C)"</span>
+  ],
+  <span class="st">"direction"</span>:      <span class="st">"positive"</span>,
+  <span class="st">"timestamp_utc"</span>:  <span class="st">"2026-05-19T10:00:00Z"</span>
+}</pre>
+    </div>
+  </div>
+
+  <h3>15.7 Multi-Sensor Corroboration</h3>
+  <p>
+    After all sensors on a turbine have been classified independently, run a second pass
+    that links assessments by component group. When multiple sensors within the same
+    physical subsystem show concurrent drift, the evidence score of each is boosted and
+    the combined assessment is written to a separate
+    <code>corroborated_alerts.jsonl</code> file — these are the highest-confidence records.
+  </p>
+
+  <table>
+    <thead>
+      <tr><th>Component group</th><th>Sensors involved</th><th>Score boost if ≥ 2 agree</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Generator bearings</strong></td>
+        <td>Generator bearing front + rear temperature</td>
+        <td class="bad">+2 — same bearing housing; both rising = physical confirmation</td>
+      </tr>
+      <tr>
+        <td><strong>Generator windings</strong></td>
+        <td>Stator temperature 1 + Generator bearing front/rear</td>
+        <td class="warn">+1 — different failure modes but share the same cooling path</td>
+      </tr>
+      <tr>
+        <td><strong>Gearbox drivetrain</strong></td>
+        <td>Gear oil temperature + Front/rear main bearing temperature</td>
+        <td class="warn">+1 — shared lubrication circuit; rise in either can heat the other</td>
+      </tr>
+      <tr>
+        <td><strong>Nacelle ambient (reference only)</strong></td>
+        <td>Nacelle temperature</td>
+        <td class="good">0 — used to cross-check; if nacelle temp is stable but component ΔT rises, the component signal is genuine</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <pre><span class="kw">def</span> <span class="fn">apply_corroboration</span>(records: list[AssessmentRecord]) -> list[AssessmentRecord]:
+    <span class="cm">"""
+    Group records by turbine; for each component group where >= 2 sensors
+    are at WATCH or above, boost the evidence_score of all members by +2
+    and populate corroborated_by.
+    """</span>
+    GROUPS = [
+        [<span class="st">"Generator bearing front temperature (°C)"</span>,
+         <span class="st">"Generator bearing rear temperature (°C)"</span>],
+        [<span class="st">"Gear oil temperature (°C)"</span>,
+         <span class="st">"Front bearing temperature (°C)"</span>,
+         <span class="st">"Rear bearing temperature (°C)"</span>],
+        [<span class="st">"Stator temperature 1 (°C)"</span>,
+         <span class="st">"Generator bearing front temperature (°C)"</span>],
+    ]
+    <span class="kw">from</span> itertools <span class="kw">import</span> groupby
+    <span class="kw">for</span> turbine_key, grp <span class="kw">in</span> groupby(records, key=<span class="kw">lambda</span> r: (r.farm, r.turbine)):
+        turbine_recs = <span class="nb">list</span>(grp)
+        flagged = {r.component <span class="kw">for</span> r <span class="kw">in</span> turbine_recs <span class="kw">if</span> r.severity != <span class="st">"HEALTHY"</span>}
+        <span class="kw">for</span> group <span class="kw">in</span> GROUPS:
+            active = [c <span class="kw">for</span> c <span class="kw">in</span> group <span class="kw">if</span> c <span class="kw">in</span> flagged]
+            <span class="kw">if</span> <span class="nb">len</span>(active) &gt;= <span class="num">2</span>:
+                <span class="kw">for</span> rec <span class="kw">in</span> turbine_recs:
+                    <span class="kw">if</span> rec.component <span class="kw">in</span> active:
+                        rec.evidence_score += <span class="num">2</span>
+                        rec.corroborated_by = [c <span class="kw">for</span> c <span class="kw">in</span> active <span class="kw">if</span> c != rec.component]
+    <span class="kw">return</span> records</pre>
+
+  <h3>15.8 Displaying Results in Grafana</h3>
+
+  <p>Use three Grafana panels to surface both bins at once:</p>
+
+  <div class="grid3">
+    <div class="card">
+      <h4>🔥 Component Heatmap</h4>
+      <p><strong>Panel type:</strong> Heatmap or State Timeline.</p>
+      <p>Rows = turbines, columns = temperature components. Cell colour = most-recent assessment severity:
+      <span class="pill pill-green">HEALTHY</span>
+      <span class="pill pill-orange">WATCH</span>
+      <span class="pill pill-orange">WARNING</span>
+      <span class="pill pill-red">CRITICAL</span>
+      Grey = UNKNOWN (no recent record).
+      </p>
+      <p><strong>LogQL:</strong> query <code>degrading_records.jsonl</code> and <code>healthy_records.jsonl</code>
+      pushed to Loki with labels <code>bin="HEALTHY"</code> / <code>bin="DEGRADING"</code>.
+      Use <code>last_over_time</code> per <code>turbine, component</code>.</p>
+    </div>
+    <div class="card">
+      <h4>📈 ΔT Trend Time Series</h4>
+      <p><strong>Panel type:</strong> Time Series with threshold bands.</p>
+      <p>Show the rolling 30-day mean ΔT for a selected turbine and component.
+      Horizontal reference lines at 1.5 °C (yellow), 3 °C (orange), 5 °C (red).
+      Grafana annotations automatically mark IEC service events pulled from Loki's
+      <code>event="data_gap"</code> and <code>event="drift_alert"</code> streams.
+      Background colour changes as the mean crosses each band.</p>
+      <p>Add a <em>second overlay series</em> from the HEALTHY bin — the flat
+      segment before any drift is visible — so operators can see exactly when
+      conditions changed.</p>
+    </div>
+    <div class="card">
+      <h4>📋 Assessment Log Table</h4>
+      <p><strong>Panel type:</strong> Logs or Table.</p>
+      <p>A live-updating table of the last N assessment records, one row per
+      turbine/component/assessment. Columns: timestamp, farm, turbine, component,
+      bin, severity, mean ΔT, evidence score, corroborated_by.</p>
+      <p>Filter by <code>bin="DEGRADING"</code> to see only active alerts; filter by
+      <code>bin="HEALTHY"</code> to get an audit trail of confirmed-good assessments.
+      Sort by <code>evidence_score desc</code> to prioritise the most certain alerts first.</p>
+    </div>
+  </div>
+
+  <div class="alert alert-green">
+    ✅ <strong>What "proof of degradation" looks like in practice:</strong>
+    A turbine with a generator bearing fault typically produces a
+    <code>WATCH</code> record 3–4 months before failure, escalating to
+    <code>WARNING</code> at 1–2 months, with <code>evidence_score ≥ 3</code>
+    and <code>corroborated_by</code> listing at least both front and rear bearing
+    sensors. The DEGRADING record's <code>slope_per_month</code> field
+    will be ≥ 0.3 °C/month and the rolling mean ΔT will have been above the
+    WATCH threshold for ≥ 14 consecutive days. <br><br>
+    ✅ <strong>What "proof of health" looks like:</strong>
+    A turbine that has emitted a HEALTHY record every month for 12 months with
+    <code>observations ≥ 30</code>, <code>mean_delta_t &lt; 1.0°C</code>,
+    and <code>slope_per_month &lt; 0.10°C</code> gives high confidence that the
+    thermal baseline is stable and no early-stage degradation is detectable with
+    the current SCADA resolution.
+  </div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════════════════ 16 -->
+  <h2 id="frontend"><span class="num">16</span> Frontend Display of Degradation Results</h2>
+
+  <p>
+    Grafana is the real-time operations view; the Vue frontend is the analytical view where
+    operators can drill into the raw data behind any alert. The mechanism already exists:
+    the app loads <code>frontend/public/crawler_results.json</code> at startup and renders
+    it as the <strong>Crawler Findings</strong> sub-tab. The degradation crawler follows
+    exactly the same pattern — it writes a static JSON file that
+    the frontend fetches, with no API call needed.
+  </p>
+
+  <div class="alert alert-blue">
+    💡 <strong>Key design principle:</strong> The Vue frontend never reads JSONL files directly.
+    An <strong>export script</strong> (<code>scripts/export_degradation_results.py</code>),
+    run after each major crawl cycle, consolidates all assessment records from both JSONL files
+    into a single <code>frontend/public/degradation_results.json</code>.
+    The Vue app loads that single file with <code>fetch('/degradation_results.json')</code>
+    — one HTTP request, zero backend dependency.
+  </div>
+
+  <h3>16.1 Data Flow</h3>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="phase-num">Step 1</div>
+      <div class="phase-title">🕷️ Crawl</div>
+      <div class="phase-desc">Degradation crawler appends to <code>healthy_records.jsonl</code> and <code>degrading_records.jsonl</code> after each run</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 2</div>
+      <div class="phase-title">📦 Export</div>
+      <div class="phase-desc"><code>export_degradation_results.py</code> reads both JSONL files, deduplicates, aggregates, and writes <code>frontend/public/degradation_results.json</code></div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 3</div>
+      <div class="phase-title">🌐 Serve</div>
+      <div class="phase-desc">Vite's static file server (dev) or the deployed frontend host serves the JSON file at <code>/degradation_results.json</code></div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 4</div>
+      <div class="phase-title">🖥️ Display</div>
+      <div class="phase-desc">Vue app fetches the file on mount, populates the <strong>Degradation</strong> sub-tab with view selector, assessment table, and heatmap</div>
+    </div>
+  </div>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong>Trigger the export after each crawl:</strong> Add
+    <code>python "${REPO_DIR}/scripts/export_degradation_results.py"</code>
+    as the last line of <code>crawler/run_with_update.sh</code> (§ 13.3), after the crawler
+    call. This keeps the frontend file within one hour of the latest assessments. If exporting
+    fails (e.g. JSONL not yet written on the first run), the script exits cleanly and the
+    frontend will simply continue to show the previous version of the file.
+  </div>
+
+  <h3>16.2 Output File Schema — <code>degradation_results.json</code></h3>
+  <p>
+    The schema mirrors <code>crawler_results.json</code> as closely as possible.
+    The top-level <code>"views"</code> object is the counterpart of <code>"patterns"</code>,
+    so the same pattern-button rendering the frontend already uses for Crawler Findings
+    requires only minimal additions to handle the new fields.
+  </p>
+
+  <pre>{
+  <span class="st">"generated_at"</span>:      <span class="st">"2026-05-19T10:00:00Z"</span>,
+  <span class="st">"total_assessments"</span>: <span class="num">1423</span>,
+  <span class="st">"healthy_count"</span>:     <span class="num">1378</span>,
+  <span class="st">"degrading_count"</span>:   <span class="num">45</span>,
+
+  <span class="cm">// ── "views" mirrors "patterns" in crawler_results.json ──────────────</span>
+  <span class="st">"views"</span>: {
+    <span class="st">"critical"</span>: {
+      <span class="st">"label"</span>:       <span class="st">"CRITICAL"</span>,
+      <span class="st">"icon"</span>:        <span class="st">"🚨"</span>,
+      <span class="st">"description"</span>: <span class="st">"Mean ΔT > 5°C or evidence score ≥ 5. Immediate inspection required."</span>,
+      <span class="st">"color"</span>:       <span class="st">"red"</span>,
+      <span class="st">"count"</span>:       <span class="num">2</span>,
+      <span class="st">"records"</span>: [
+        {
+          <span class="st">"farm"</span>:            <span class="st">"kelmarsh"</span>,
+          <span class="st">"turbine"</span>:         <span class="st">"turbine_2"</span>,
+          <span class="st">"component"</span>:       <span class="st">"Generator bearing front temperature (°C)"</span>,
+          <span class="st">"bin"</span>:             <span class="st">"DEGRADING"</span>,
+          <span class="st">"severity"</span>:        <span class="st">"CRITICAL"</span>,
+          <span class="st">"period_start"</span>:    <span class="st">"2020-04-01"</span>,
+          <span class="st">"period_end"</span>:      <span class="st">"2020-07-15"</span>,
+          <span class="st">"mean_delta_t"</span>:    <span class="num">5.8</span>,
+          <span class="st">"sigma"</span>:           <span class="num">1.1</span>,
+          <span class="st">"slope_per_month"</span>: <span class="num">0.6</span>,
+          <span class="st">"observations"</span>:    <span class="num">519</span>,
+          <span class="st">"evidence_score"</span>:  <span class="num">5</span>,
+          <span class="st">"corroborated_by"</span>: [<span class="st">"Generator bearing rear temperature (°C)"</span>],
+          <span class="st">"direction"</span>:       <span class="st">"positive"</span>
+        }
+      ]
+    },
+    <span class="st">"warning"</span>: { <span class="cm">/* same structure, severity = "WARNING" */</span> },
+    <span class="st">"watch"</span>:    { <span class="cm">/* same structure, severity = "WATCH"   */</span> },
+    <span class="st">"healthy"</span>:  { <span class="cm">/* most recent HEALTHY record per (turbine, component) */</span> }
+  },
+
+  <span class="cm">// ── Heatmap: newest assessment per farm → turbine → component ──────</span>
+  <span class="st">"heatmap"</span>: {
+    <span class="st">"kelmarsh"</span>: {
+      <span class="st">"turbine_2"</span>: {
+        <span class="st">"Generator bearing front temperature (°C)"</span>: {
+          <span class="st">"severity"</span>:        <span class="st">"WARNING"</span>,
+          <span class="st">"bin"</span>:             <span class="st">"DEGRADING"</span>,
+          <span class="st">"mean_delta_t"</span>:    <span class="num">3.7</span>,
+          <span class="st">"evidence_score"</span>:  <span class="num">3</span>,
+          <span class="st">"slope_per_month"</span>: <span class="num">0.4</span>,
+          <span class="st">"period_end"</span>:      <span class="st">"2020-07-15"</span>
+        },
+        <span class="st">"Gear oil temperature (°C)"</span>: {
+          <span class="st">"severity"</span>: <span class="st">"HEALTHY"</span>,
+          <span class="st">"bin"</span>:      <span class="st">"HEALTHY"</span>,
+          <span class="st">"mean_delta_t"</span>: <span class="num">0.4</span>,
+          <span class="st">"evidence_score"</span>: <span class="num">0</span>,
+          <span class="st">"period_end"</span>: <span class="st">"2020-07-01"</span>
+        }
+      }
+    }
+  }
+}</pre>
+
+  <h3>16.3 Export Script — <code>scripts/export_degradation_results.py</code></h3>
+  <p>
+    Modelled directly on the existing <code>scripts/export_crawler_results.py</code>.
+    Run from the project root after a full crawl cycle or add it to the auto-runner script.
+  </p>
+
+  <pre><span class="cm">"""
+scripts/export_degradation_results.py
+Reads healthy_records.jsonl and degrading_records.jsonl produced by the
+degradation crawler and writes frontend/public/degradation_results.json
+for consumption by the Vue frontend.
+
+Usage:
+    python scripts/export_degradation_results.py
+"""</span>
+<span class="kw">import</span> json, pathlib, datetime
+<span class="kw">from</span> collections <span class="kw">import</span> defaultdict
+
+ROOT         = pathlib.Path(__file__).resolve().parent.parent
+RESULTS_DIR  = ROOT / <span class="st">"crawler"</span> / <span class="st">"degradation"</span> / <span class="st">"results"</span>
+OUT_FILE     = ROOT / <span class="st">"frontend"</span> / <span class="st">"public"</span> / <span class="st">"degradation_results.json"</span>
+
+VIEW_META = {
+    <span class="st">"critical"</span>: {
+        <span class="st">"label"</span>:       <span class="st">"CRITICAL"</span>,
+        <span class="st">"icon"</span>:        <span class="st">"🚨"</span>,
+        <span class="st">"description"</span>: <span class="st">"Mean ΔT > 5°C or evidence score ≥ 5. Immediate inspection required."</span>,
+        <span class="st">"color"</span>:       <span class="st">"red"</span>,
+    },
+    <span class="st">"warning"</span>: {
+        <span class="st">"label"</span>:       <span class="st">"WARNING"</span>,
+        <span class="st">"icon"</span>:        <span class="st">"⚠️"</span>,
+        <span class="st">"description"</span>: <span class="st">"Mean ΔT 3–5°C or evidence score ≥ 3. Plan inspection within 30 days."</span>,
+        <span class="st">"color"</span>:       <span class="st">"orange"</span>,
+    },
+    <span class="st">"watch"</span>: {
+        <span class="st">"label"</span>:       <span class="st">"WATCH"</span>,
+        <span class="st">"icon"</span>:        <span class="st">"👁️"</span>,
+        <span class="st">"description"</span>: <span class="st">"Mean ΔT 1.5–3°C or evidence score ≥ 1. Monitor closely."</span>,
+        <span class="st">"color"</span>:       <span class="st">"yellow"</span>,
+    },
+    <span class="st">"healthy"</span>: {
+        <span class="st">"label"</span>:       <span class="st">"HEALTHY"</span>,
+        <span class="st">"icon"</span>:        <span class="st">"✅"</span>,
+        <span class="st">"description"</span>: <span class="st">"Confirmed within normal bounds (most recent record per component)."</span>,
+        <span class="st">"color"</span>:       <span class="st">"green"</span>,
+    },
+}
+
+<span class="kw">def</span> <span class="fn">load_jsonl</span>(path: pathlib.Path) -> list:
+    records = []
+    <span class="kw">try</span>:
+        <span class="kw">for</span> line <span class="kw">in</span> path.read_text(encoding=<span class="st">"utf-8"</span>).splitlines():
+            line = line.strip()
+            <span class="kw">if not</span> line: <span class="kw">continue</span>
+            <span class="kw">try</span>:
+                obj = json.loads(line)
+                <span class="kw">if isinstance</span>(obj, <span class="nb">dict</span>): records.append(obj)
+            <span class="kw">except</span> json.JSONDecodeError:
+                <span class="kw">pass</span>
+    <span class="kw">except</span> FileNotFoundError:
+        <span class="kw">pass</span>
+    <span class="kw">return</span> records
+
+<span class="kw">def</span> <span class="fn">main</span>():
+    healthy   = load_jsonl(RESULTS_DIR / <span class="st">"healthy_records.jsonl"</span>)
+    degrading = load_jsonl(RESULTS_DIR / <span class="st">"degrading_records.jsonl"</span>)
+
+    <span class="cm"># ── Build views (mirrors "patterns" in crawler_results.json) ─────────</span>
+    by_view = defaultdict(<span class="nb">list</span>)
+    <span class="kw">for</span> rec <span class="kw">in</span> degrading:
+        sev = rec.get(<span class="st">"severity"</span>, <span class="st">"WATCH"</span>).lower()
+        <span class="kw">if</span> sev <span class="kw">in</span> VIEW_META:
+            by_view[sev].append(rec)
+
+    <span class="cm"># Keep only latest HEALTHY record per (farm, turbine, component)</span>
+    latest_healthy: dict = {}
+    <span class="kw">for</span> rec <span class="kw">in</span> healthy:
+        key = (rec.get(<span class="st">"farm"</span>), rec.get(<span class="st">"turbine"</span>), rec.get(<span class="st">"component"</span>))
+        existing = latest_healthy.get(key)
+        <span class="kw">if not</span> existing <span class="kw">or</span> rec.get(<span class="st">"period_end"</span>, <span class="st">""</span>) > existing.get(<span class="st">"period_end"</span>, <span class="st">""</span>):
+            latest_healthy[key] = rec
+    by_view[<span class="st">"healthy"</span>] = <span class="nb">sorted</span>(
+        latest_healthy.values(),
+        key=<span class="kw">lambda</span> r: (r.get(<span class="st">"farm"</span>,<span class="st">""</span>), r.get(<span class="st">"turbine"</span>,<span class="st">""</span>), r.get(<span class="st">"component"</span>,<span class="st">""</span>))
+    )
+
+    <span class="cm"># Sort degrading views: worst evidence first</span>
+    <span class="kw">for</span> sev <span class="kw">in</span> (<span class="st">"critical"</span>, <span class="st">"warning"</span>, <span class="st">"watch"</span>):
+        by_view[sev].sort(key=<span class="kw">lambda</span> r: (-r.get(<span class="st">"evidence_score"</span>,<span class="num">0</span>), -r.get(<span class="st">"mean_delta_t"</span>,<span class="num">0</span>)))
+
+    views = {}
+    <span class="kw">for</span> key, meta <span class="kw">in</span> VIEW_META.items():
+        views[key] = {**meta, <span class="st">"count"</span>: <span class="nb">len</span>(by_view[key]), <span class="st">"records"</span>: by_view[key]}
+
+    <span class="cm"># ── Heatmap: newest assessment per (farm, turbine, component) ────────</span>
+    heatmap: dict = {}
+    <span class="kw">for</span> rec <span class="kw">in</span> degrading + <span class="nb">list</span>(latest_healthy.values()):
+        farm, turbine, comp = rec.get(<span class="st">"farm"</span>,<span class="st">""</span>), rec.get(<span class="st">"turbine"</span>,<span class="st">""</span>), rec.get(<span class="st">"component"</span>,<span class="st">""</span>)
+        heatmap.setdefault(farm, {}).setdefault(turbine, {})[comp] = {
+            <span class="st">"severity"</span>:        rec.get(<span class="st">"severity"</span>),
+            <span class="st">"bin"</span>:             rec.get(<span class="st">"bin"</span>),
+            <span class="st">"mean_delta_t"</span>:    rec.get(<span class="st">"mean_delta_t"</span>),
+            <span class="st">"evidence_score"</span>:  rec.get(<span class="st">"evidence_score"</span>),
+            <span class="st">"slope_per_month"</span>: rec.get(<span class="st">"slope_per_month"</span>),
+            <span class="st">"period_end"</span>:      rec.get(<span class="st">"period_end"</span>),
+        }
+
+    output = {
+        <span class="st">"generated_at"</span>:      datetime.datetime.utcnow().strftime(<span class="st">"%Y-%m-%dT%H:%M:%SZ"</span>),
+        <span class="st">"total_assessments"</span>: <span class="nb">len</span>(healthy) + <span class="nb">len</span>(degrading),
+        <span class="st">"healthy_count"</span>:     <span class="nb">len</span>(healthy),
+        <span class="st">"degrading_count"</span>:   <span class="nb">len</span>(degrading),
+        <span class="st">"views"</span>:             views,
+        <span class="st">"heatmap"</span>:           heatmap,
+    }
+
+    OUT_FILE.parent.mkdir(parents=<span class="nb">True</span>, exist_ok=<span class="nb">True</span>)
+    OUT_FILE.write_text(json.dumps(output, indent=<span class="num">2</span>), encoding=<span class="st">"utf-8"</span>)
+    print(<span class="nb">f</span><span class="st">"✓ Written {output['total_assessments']} assessments "
+          f"({output['degrading_count']} degrading, {output['healthy_count']} healthy) → {OUT_FILE}"</span>)
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    main()</pre>
+
+  <h3>16.4 Frontend Sub-Tab Specification</h3>
+  <p>
+    Extend the <strong>Custom Queries</strong> page in <code>frontend/src/App.vue</code> with
+    a third sub-tab alongside the existing "Saved Queries" and "Crawler Findings" tabs.
+    The implementation mirrors the existing Crawler Findings sub-tab so that code can be
+    shared or copied with minor field changes.
+  </p>
+
+  <table>
+    <thead><tr><th>Element</th><th>New / Changed</th><th>Details</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>Sub-tab button</strong></td>
+        <td>New</td>
+        <td>Add <code>cqSubTab === 'degradation'</code> button labelled
+        <code>🌡️ Degradation</code> next to the existing two sub-tab buttons.
+        Badge shows total <code>degrading_count</code> from the loaded file.</td>
+      </tr>
+      <tr>
+        <td><strong>State variables</strong></td>
+        <td>New</td>
+        <td><code>degradationResults</code> (the parsed JSON), <code>dgLoadError</code>,
+        <code>dgActiveView</code> (starts at <code>"critical"</code> if count &gt; 0,
+        else <code>"warning"</code>, else <code>"watch"</code>).</td>
+      </tr>
+      <tr>
+        <td><strong>Load function</strong></td>
+        <td>New</td>
+        <td><code>loadDegradationResults()</code> — <code>fetch('/degradation_results.json')</code>,
+        same pattern as <code>loadCrawlerResults()</code>. Called in <code>onMounted</code>.</td>
+      </tr>
+      <tr>
+        <td><strong>Summary strip</strong></td>
+        <td>New</td>
+        <td>Row of four coloured pill badges: 🚨 2 CRITICAL · ⚠️ 15 WARNING · 👁️ 28 WATCH · ✅ 1378 HEALTHY.
+        Clicking a badge activates that view. Generated at date shown at far right.</td>
+      </tr>
+      <tr>
+        <td><strong>View selector buttons</strong></td>
+        <td>New (same pattern as <code>cr-pattern-btn</code>)</td>
+        <td>Four buttons — one per view key — styled identically to the existing
+        <code>.cr-pattern-btn</code> buttons. Active view is highlighted.</td>
+      </tr>
+      <tr>
+        <td><strong>Assessment table</strong></td>
+        <td>New</td>
+        <td>Columns: Farm · Turbine · Component · ΔT mean · Slope · σ · Score · Corroborated by · Period end · Action.
+        The <code>mean_delta_t</code> cell is colour-coded: &lt;1.5°C green, 1.5–3°C yellow, 3–5°C orange, &gt;5°C red.</td>
+      </tr>
+      <tr>
+        <td><strong>Heatmap table</strong></td>
+        <td>New (optional, collapsible)</td>
+        <td>Rows = turbines, columns = temperature components. Cell content is the current severity
+        emoji (✅ / 👁️ / ⚠️ / 🚨) — or grey if unknown. Clicking a cell activates the matching
+        record in the assessment table. Heatmap data sourced from the top-level <code>"heatmap"</code> key.</td>
+      </tr>
+      <tr>
+        <td><strong>"→ View Data" action</strong></td>
+        <td>New</td>
+        <td>Navigates to the <strong>Query for Data</strong> main tab for the record's
+        turbine and period (see § 16.5).</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>16.5 "→ View Data" Drill-Down Behaviour</h3>
+  <p>
+    Each row in the assessment table has a <strong>→ View Data</strong> link (identical in
+    appearance to the one already used in the Crawler Findings table). When clicked it
+    pre-populates the Query for Data controls and fetches results automatically.
+  </p>
+
+  <pre><span class="cm">// App.vue — add alongside goToDataForCrawlerSlot()</span>
+<span class="kw">async function</span> <span class="fn">goToDataForDegradationRecord</span>(rec) {
+    <span class="cm">// Limit the displayed range to 7 days even if the period is longer</span>
+    <span class="kw">const</span> MAX_DAYS = <span class="num">7</span>
+    <span class="kw">const</span> start = <span class="kw">new</span> Date(rec.period_start)
+    <span class="kw">const</span> end   = <span class="kw">new</span> Date(rec.period_end)
+    <span class="kw">const</span> cappedEnd = <span class="kw">new</span> Date(Math.min(end, <span class="kw">new</span> Date(rec.period_start).setDate(start.getDate() + MAX_DAYS - <span class="num">1</span>)))
+
+    selectedFarm.value       = rec.farm
+    onFarmChange()
+    selectedTurbines.value   = [rec.turbine]
+    selectedFileType.value   = <span class="st">'data'</span>
+    selectedDateFrom.value   = rec.period_start
+    selectedDateTo.value     = cappedEnd.toISOString().slice(<span class="num">0</span>, <span class="num">10</span>)
+    hourFrom.value           = <span class="nb">null</span>
+    hourTo.value             = <span class="nb">null</span>
+    <span class="cm">// Pre-select: the flagged component + operating condition columns</span>
+    allColumns.value         = <span class="nb">false</span>
+    selectedColumns.value    = [
+        rec.component,
+        <span class="st">'Wind speed (m/s)'</span>, <span class="st">'Power (kW)'</span>, <span class="st">'Nacelle ambient temperature (°C)'</span>
+    ].filter(c => availableColumns.value.includes(c))
+    <span class="kw">if</span> (selectedColumns.value.length === <span class="num">0</span>) allColumns.value = <span class="nb">true</span>
+
+    mainTab.value = <span class="st">'query'</span>
+    <span class="kw">await new</span> Promise(r => setTimeout(r, <span class="num">50</span>))
+    <span class="kw">await</span> fetchData()
+}</pre>
+
+  <div class="alert alert-blue">
+    💡 <strong>Why pre-select temperature + operating condition columns?</strong>
+    When the operator drills down from a WARNING record, the most useful view is the
+    flagged temperature sensor (<code>rec.component</code>) alongside wind speed, power,
+    and ambient temperature — the three normalisation variables. This immediately shows
+    whether the ambient conditions were stable during the alert period, ruling out the
+    most common false-positive explanation (an unusual heat wave). The column selection
+    falls back to "all columns" if the farm doesn't have the expected column names.
+  </div>
+
+  <h3>16.6 File Freshness and Versioning</h3>
+
+  <table>
+    <thead><tr><th>Trigger</th><th>Action</th><th>Result</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>After every hourly crawl run (on each Pi)</td>
+        <td><code>export_degradation_results.py</code> appended to <code>run_with_update.sh</code></td>
+        <td>Frontend file updated within 1 hour of new assessments</td>
+      </tr>
+      <tr>
+        <td>Manual full-history re-scan</td>
+        <td>Run <code>python scripts/export_degradation_results.py</code> from any machine</td>
+        <td>Re-aggregates all JSONL records; combines output from all Pis if their
+        JSONL files are synced to a central location first</td>
+      </tr>
+      <tr>
+        <td>Multi-node aggregation</td>
+        <td>Add an rsync or scp step before the export to pull JSONL files from all nodes</td>
+        <td>Single merged <code>degradation_results.json</code> covering all Pis' turbines</td>
+      </tr>
+      <tr>
+        <td>Frontend startup</td>
+        <td><code>fetch('/degradation_results.json')</code> with browser cache headers</td>
+        <td><code>generated_at</code> field shows age of data in the UI; operator knows if stale</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="alert alert-green">
+    ✅ <strong>Complete frontend file map:</strong>
+    <ul style="margin-top:8px;">
+      <li><code>frontend/public/crawler_results.json</code> — existing Crawler Findings (operational patterns)</li>
+      <li><code>frontend/public/degradation_results.json</code> — <strong>new</strong> Degradation Findings (assessment records + heatmap)</li>
+      <li><code>frontend/public/custom_queries.json</code> — existing saved manual queries</li>
+    </ul>
+    All three are static JSON files placed at build time. The Vue dev server and production
+    build both serve them from the <code>public/</code> directory at the root URL path — no
+    API endpoint, no CORS concern, zero backend changes required.
+  </div>
+
+  <hr>
+
+  <!-- ══════════════════════════════════════════════════════ 17 -->
+  <h2 id="environment"><span class="num">17</span> Uniform Python Environment Across All Nodes</h2>
+
+  <p>
+    Every machine running the crawler must execute the <strong>exact same Python version</strong>
+    and the <strong>exact same library versions</strong>. A package that auto-upgrades on one Pi
+    while the others stay behind will produce subtly different behaviour — different HTTP retry
+    logic, different TLS cipher suites, different date-parsing edge cases — without any obvious
+    error. The approach here is <em>pin everything, verify on every run, regenerate deliberately</em>.
+  </p>
+
+  <!-- ── 17.1 ── -->
+  <h3>17.1 Python Version Target</h3>
+
+  <p>
+    The required Python version is recorded in <code>.python-version</code> at the repository
+    root. Every install script reads this file. The value is a single line: <code>3.11</code>.
+  </p>
+
+  <table>
+    <thead><tr><th>Platform</th><th>Default Python</th><th>Action needed</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Raspberry Pi OS <strong>Bookworm</strong> (Debian 12)</td>
+        <td class="good">3.11 ✓</td>
+        <td>None — <code>python3</code> already satisfies the requirement</td>
+      </tr>
+      <tr>
+        <td>Raspberry Pi OS <strong>Bullseye</strong> (Debian 11)</td>
+        <td class="warn">3.9</td>
+        <td><code>sudo add-apt-repository ppa:deadsnakes/ppa &amp;&amp; sudo apt install python3.11 python3.11-venv</code></td>
+      </tr>
+      <tr>
+        <td>Ubuntu 22.04 LTS / Debian 12 VM</td>
+        <td class="good">3.10–3.11 ✓</td>
+        <td>Verify with <code>python3 --version</code>; upgrade via <code>apt</code> if needed</td>
+      </tr>
+      <tr>
+        <td>Any other Linux</td>
+        <td class="warn">Varies</td>
+        <td>Install <a href="https://github.com/pyenv/pyenv">pyenv</a>, then <code>pyenv install 3.11</code> — it reads <code>.python-version</code> automatically</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    <code>.python-version</code> (repository root):
+  </p>
+  <pre>3.11</pre>
+
+  <!-- ── 17.2 ── -->
+  <h3>17.2 Dependency Files — Two Layers</h3>
+
+  <p>
+    Two files together enforce a fully reproducible environment:
+  </p>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>📝 <code>crawler/requirements.txt</code> — intent</h4>
+      <p>Human-readable. Lists only direct dependencies with exact versions.
+      Edit this file when you want to add or upgrade a package.
+      Never used for installation directly.</p>
+      <pre style="margin:10px 0 0; font-size:0.8rem;"># Direct runtime dependencies
+# Python target: 3.11.x
+# All other imports are stdlib.
+
+requests==2.32.3
+# boto3==1.34.0  # S3/R2 (optional)</pre>
+    </div>
+    <div class="card">
+      <h4>🔒 <code>crawler/requirements.lock</code> — enforcement</h4>
+      <p>Auto-generated. Lists every package in the full transitive graph with
+      exact versions. <strong>Used for installation on all nodes.</strong>
+      Never edit by hand — regenerate when <code>requirements.txt</code> changes.</p>
+      <pre style="margin:10px 0 0; font-size:0.8rem;">certifi==2024.8.30
+charset-normalizer==3.4.0
+idna==3.10
+requests==2.32.3
+urllib3==2.2.3</pre>
+    </div>
+  </div>
+
+  <div class="alert alert-blue">
+    💡 <strong>Why not a single file?</strong> <code>requirements.txt</code> tells humans
+    what the crawler <em>directly</em> depends on and why. <code>requirements.lock</code>
+    tells <code>pip</code> exactly which bytes to install. Keeping them separate means
+    a human can review one line in <code>requirements.txt</code> ("we upgraded requests
+    to 2.32.3") without having to parse 50 lines of transitive noise.
+  </div>
+
+  <!-- ── 17.3 ── -->
+  <h3>17.3 Regenerating the Lock File</h3>
+  <p>
+    Run these commands on a <strong>reference machine</strong> (your development laptop) any
+    time <code>requirements.txt</code> changes. The new lock file is committed and pushed;
+    all nodes pick it up automatically on their next git pull.
+  </p>
+
+  <pre><span class="cm"># 1. Edit requirements.txt — change/add the version you want</span>
+<span class="cm"># 2. Create a fresh venv on your laptop so you get clean transitive deps</span>
+python3.11 -m venv /tmp/lock-venv
+/tmp/lock-venv/bin/pip install --quiet --upgrade pip
+/tmp/lock-venv/bin/pip install --quiet -r crawler/requirements.txt
+
+<span class="cm"># 3. Capture the full transitive graph</span>
+/tmp/lock-venv/bin/pip freeze > crawler/requirements.lock
+
+<span class="cm"># 4. Commit both files together</span>
+git add crawler/requirements.txt crawler/requirements.lock
+git commit -m <span class="st">"chore: bump requests to 2.32.3"</span>
+git push
+
+<span class="cm"># 5. All nodes auto-upgrade on their next scheduled run (§ 13.3)</span></pre>
+
+  <!-- ── 17.4 ── -->
+  <h3>17.4 Installation on a Fresh Node</h3>
+  <p>
+    <code>runners/install.sh</code> has been updated to enforce both the Python version and
+    the lock file. The relevant section now runs these steps in order:
+  </p>
+
+  <pre><span class="cm"># ── 1. Python version check ───────────────────────────────────────────────────</span>
+PY_VERSION=$(python3 -c <span class="st">"import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')"</span>)
+PY_MAJOR=$(echo <span class="st">"$PY_VERSION"</span> | cut -d. -f1)
+PY_MINOR=$(echo <span class="st">"$PY_VERSION"</span> | cut -d. -f2)
+<span class="kw">if</span> [ <span class="st">"$PY_MAJOR"</span> -lt 3 ] || { [ <span class="st">"$PY_MAJOR"</span> -eq 3 ] && [ <span class="st">"$PY_MINOR"</span> -lt 11 ]; }; <span class="kw">then</span>
+    echo <span class="st">"ERROR: Python 3.11+ required (found ${PY_VERSION})"</span>; exit 1
+<span class="kw">fi</span>
+
+<span class="cm"># ── 2. Create venv and install from lock file ─────────────────────────────────</span>
+python3 -m venv <span class="st">"$REPO_DIR/.venv"</span>
+<span class="st">"$REPO_DIR/.venv/bin/pip"</span> install --quiet --upgrade pip
+<span class="st">"$REPO_DIR/.venv/bin/pip"</span> install --quiet --no-deps -r <span class="st">"$REPO_DIR/crawler/requirements.lock"</span>
+
+<span class="cm"># ── 3. Verify environment matches lock file ───────────────────────────────────</span>
+<span class="st">"$REPO_DIR/.venv/bin/python"</span> <span class="st">"$REPO_DIR/crawler/degradation/env_check.py"</span></pre>
+
+  <div class="alert alert-orange">
+    ⚠️ <strong><code>--no-deps</code> is intentional.</strong>
+    Installing with <code>--no-deps</code> forces pip to install exactly and only the packages
+    listed in the lock file — no surprise transitive upgrades. Because the lock file already
+    contains the complete transitive graph, nothing is left out.
+  </div>
+
+  <!-- ── 17.5 ── -->
+  <h3>17.5 Runtime Environment Check — <code>env_check.py</code></h3>
+  <p>
+    <code>crawler/degradation/env_check.py</code> is a small module that runs as a pre-flight
+    check at the start of every scheduled crawl invocation. It verifies:
+  </p>
+  <ul>
+    <li>Python ≥ 3.11</li>
+    <li>Every package in <code>REQUIRED_PACKAGES</code> is installed at the exact pinned version</li>
+  </ul>
+  <p>
+    If any check fails it prints the mismatch to <code>stderr</code> and exits with code 1,
+    which causes <code>run_with_update.sh</code> (§ 13.3) to abort before the crawler runs —
+    so a broken install never silently produces garbage results.
+  </p>
+
+  <pre><span class="cm"># crawler/degradation/env_check.py  (abbreviated)</span>
+<span class="kw">import</span> sys, importlib.metadata, argparse
+
+REQUIRED_PACKAGES = {
+    <span class="st">"requests"</span>:           <span class="st">"2.32.3"</span>,
+    <span class="st">"certifi"</span>:            <span class="st">"2024.8.30"</span>,
+    <span class="st">"charset-normalizer"</span>: <span class="st">"3.4.0"</span>,
+    <span class="st">"idna"</span>:               <span class="st">"3.10"</span>,
+    <span class="st">"urllib3"</span>:            <span class="st">"2.2.3"</span>,
+}
+REQUIRED_PYTHON = (<span class="num">3</span>, <span class="num">11</span>)
+
+<span class="kw">def</span> <span class="fn">check</span>(quiet=<span class="nb">False</span>) -> bool:
+    errors = []
+    <span class="kw">if</span> sys.version_info &lt; REQUIRED_PYTHON:
+        errors.append(<span class="nb">f</span><span class="st">"  Python 3.11+ required, running {sys.version.split()[0]}"</span>)
+    <span class="kw">for</span> pkg, ver <span class="kw">in</span> REQUIRED_PACKAGES.items():
+        <span class="kw">try</span>:
+            got = importlib.metadata.version(pkg)
+            <span class="kw">if</span> got != ver: errors.append(<span class="nb">f</span><span class="st">"  {pkg}: need {ver}, got {got}"</span>)
+        <span class="kw">except</span> importlib.metadata.PackageNotFoundError:
+            errors.append(<span class="nb">f</span><span class="st">"  {pkg}: NOT INSTALLED"</span>)
+    <span class="kw">if</span> errors:
+        print(<span class="st">"❌  Environment check FAILED:"</span>, file=sys.stderr)
+        <span class="kw">for</span> e <span class="kw">in</span> errors: print(e, file=sys.stderr)
+        print(<span class="st">"Fix: pip install --no-deps -r crawler/requirements.lock"</span>, file=sys.stderr)
+        <span class="kw">return False</span>
+    <span class="kw">if not</span> quiet:
+        print(<span class="nb">f</span><span class="st">"✓  Environment OK  Python {sys.version.split()[0]}  requests {ver}"</span>)
+    <span class="kw">return True</span></pre>
+
+  <p>Add the check to <code>crawler/run_with_update.sh</code> (§ 13.3) immediately before the
+  crawler call:</p>
+
+  <pre><span class="cm"># run_with_update.sh  — add these lines after the git pull / pip install block</span>
+
+<span class="cm"># ── Pre-flight: verify environment is correct ──────────────────────────────</span>
+log <span class="st">"Checking Python environment …"</span>
+<span class="kw">if</span> ! <span class="st">"$VENV"</span> <span class="st">"${REPO_DIR}/crawler/degradation/env_check.py"</span> --quiet; <span class="kw">then</span>
+    log <span class="st">"ERROR: environment check failed — aborting crawl."</span>
+    exit 1
+<span class="kw">fi</span>
+
+<span class="cm"># ── Run the crawler ─────────────────────────────────────────────────────────</span>
+<span class="st">"$VENV"</span> <span class="st">"${REPO_DIR}/crawler/run_next_hour.py"</span> \
+    --turbines <span class="st">"${TURBINE_IDS:-ALL}"</span> \
+    2>&amp;1 | tee -a <span class="st">"$LOG"</span></pre>
+
+  <!-- ── 17.6 ── -->
+  <h3>17.6 How the Auto-Update Loop Enforces the Environment</h3>
+  <p>
+    Putting the version check together with the auto-update mechanism from § 13.3, the full
+    sequence on every scheduled run is:
+  </p>
+
+  <div class="phases">
+    <div class="phase">
+      <div class="phase-num">Step 1</div>
+      <div class="phase-title">🔍 git fetch</div>
+      <div class="phase-desc">Compare local SHA to <code>origin/main</code>. Fast, no working-tree change.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 2</div>
+      <div class="phase-title">⬇️ git reset</div>
+      <div class="phase-desc">If SHA differs: pull new code <em>and</em> run <code>pip install --no-deps -r requirements.lock</code> to sync packages.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 3</div>
+      <div class="phase-title">✅ env_check</div>
+      <div class="phase-desc">Verify Python version and every package version. Abort with a clear error if anything is wrong.</div>
+    </div>
+    <div class="phase">
+      <div class="phase-num">Step 4</div>
+      <div class="phase-title">🕷️ Crawl</div>
+      <div class="phase-desc">Only reached if steps 1–3 all pass. Guaranteed to run the intended code with the intended libraries.</div>
+    </div>
+  </div>
+
+  <p>
+    Because <strong>code and lock file are committed together</strong>, a node that pulls a new
+    commit will always install the packages that commit requires — atomically. There is no
+    window where new code runs against old libraries.
+  </p>
+
+  <!-- ── 17.7 ── -->
+  <h3>17.7 Verifying a Node Manually</h3>
+  <p>
+    SSH into any node and run one of the following to confirm its environment:
+  </p>
+
+  <table>
+    <thead><tr><th>What to check</th><th>Command</th><th>Expected output</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>Python version</td>
+        <td><code>python3 --version</code></td>
+        <td><code>Python 3.11.x</code></td>
+      </tr>
+      <tr>
+        <td>Active venv</td>
+        <td><code>ls /opt/winddataAPI/.venv/bin/python</code></td>
+        <td>File exists</td>
+      </tr>
+      <tr>
+        <td>Full env check</td>
+        <td><code>/opt/winddataAPI/.venv/bin/python /opt/winddataAPI/crawler/degradation/env_check.py</code></td>
+        <td><code>✓  Environment OK  Python 3.11.x  requests 2.32.3</code></td>
+      </tr>
+      <tr>
+        <td>Installed packages</td>
+        <td><code>/opt/winddataAPI/.venv/bin/pip list</code></td>
+        <td>Must match <code>requirements.lock</code> exactly</td>
+      </tr>
+      <tr>
+        <td>Diff installed vs lock</td>
+        <td><code>/opt/winddataAPI/.venv/bin/pip freeze | diff - /opt/winddataAPI/crawler/requirements.lock</code></td>
+        <td>No output (no diff)</td>
+      </tr>
+      <tr>
+        <td>Current git commit</td>
+        <td><code>cd /opt/winddataAPI && git log -1 --oneline</code></td>
+        <td>Should match all other nodes</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- ── 17.8 ── -->
+  <h3>17.8 Repository File Map for Environment Management</h3>
+
+  <pre>winddataAPI/
+  .python-version                    <span class="cm"># "3.11" — read by pyenv and install.sh</span>
+  crawler/
+    requirements.txt                 <span class="cm"># direct deps, human-edited</span>
+    requirements.lock                <span class="cm"># full transitive graph, auto-generated, installed on nodes</span>
+    degradation/
+      env_check.py                   <span class="cm"># pre-flight runtime verifier</span>
+  runners/
+    install.sh                       <span class="cm"># one-time setup: checks py version, installs from lock file</span>
+    update.sh                        <span class="cm"># manual update: git pull + reinstall from lock file + env_check</span>
+    run_with_update.sh               <span class="cm"># auto-update runner: git pull + reinstall + env_check + crawl</span></pre>
+
+  <div class="grid2">
+    <div class="card">
+      <h4>✅ When to run <code>install.sh</code></h4>
+      <ul>
+        <li>Once on a brand-new Pi / VM, after cloning the repo</li>
+        <li>After a complete OS reinstall</li>
+        <li>After the venv is deleted and needs to be rebuilt</li>
+      </ul>
+      <p style="margin-top:8px;font-size:0.84rem;">
+        <code>bash runners/install.sh pi-1</code>
+      </p>
+    </div>
+    <div class="card">
+      <h4>🔄 When to run <code>update.sh</code></h4>
+      <ul>
+        <li>After manually pushing a new <code>requirements.lock</code></li>
+        <li>To confirm a node is current without waiting for the cron tick</li>
+        <li>After a long network outage (the auto-update may have skipped)</li>
+      </ul>
+      <p style="margin-top:8px;font-size:0.84rem;">
+        <code>bash runners/update.sh</code>
+      </p>
+    </div>
+  </div>
+
+  <div class="alert alert-green">
+    ✅ <strong>What "same setup" guarantees in practice:</strong><br>
+    Every node runs the same Python minor version (3.11.x), the same
+    <code>requests</code> version (2.32.3) with the same TLS/retry behaviour,
+    and the same transitive library graph. If a node somehow diverges
+    (e.g. someone ran <code>pip install requests --upgrade</code> directly),
+    <code>env_check.py</code> will catch it at the next scheduled run,
+    log an error to Loki (visible in the Grafana Fleet Monitor — § 14), and
+    abort the crawl rather than produce results with an unknown dependency state.
+    The fix is always one command:
+    <code>pip install --no-deps -r crawler/requirements.lock</code>.
+  </div>
+
+  <hr>
+  <p style="text-align:center; color: var(--muted); font-size: 0.82rem;">
+    Generated for <strong>winddataAPI</strong> project · Kelmarsh + Penmanshiel SCADA datasets ·
+    May 2026
+  </p>
+
+</div>
+</body>
+</html>
+

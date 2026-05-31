@@ -1,15 +1,14 @@
 """
-Unit tests for the /farms/{farm}/{data_type}/turbines/{turbine}/query endpoint.
-Covers data and status queries for Kelmarsh and Penmanshiel.
+Integration tests for the /farms/{farm}/{data_type}/turbines/{turbine}/query endpoint.
+Runs against the live API at https://winddataapi-backend.onrender.com
 """
 
 import pytest
 import httpx
-from app.api import app
 
 pytestmark = pytest.mark.anyio
 
-transport = httpx.ASGITransport(app=app)
+BASE_URL = "https://winddataapi-backend.onrender.com"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -22,7 +21,7 @@ PENMANSHIEL_END   = "2018-05-01 06:00:00"
 
 
 async def _query(farm: str, data_type: str, turbine: str, start: str, end: str):
-    async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+    async with httpx.AsyncClient(base_url=BASE_URL, timeout=60) as client:
         return await client.get(
             f"/farms/{farm}/{data_type}/turbines/{turbine}/query",
             params={"start": start, "end": end},

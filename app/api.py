@@ -78,7 +78,6 @@ async def metrics_middleware(request: Request, call_next):
     log.info(
         f"{request.method} {request.url.path} "
         f"status={response.status_code} ip={ip} duration_ms={dur_ms}",
-        extra={"loki_ip": ip, "loki_endpoint": request.url.path},
     )
     return response
 
@@ -213,7 +212,10 @@ def get_day_data(
         log.info(
             f"query farm={farm} turbines={effective_turbines} date={date}..{effective_date_to} "
             f"hours={hour_from}-{hour_to} type={file_type} rows={count} duration_ms={dur_ms} ip={ip}",
-            extra={"loki_farm": farm, "loki_file_type": file_type, "loki_ip": ip},
+            extra={
+                "loki_farm": farm,
+                "loki_turbine": effective_turbines[0] if len(effective_turbines) == 1 else "multiple",
+            },
         )
         return result
     except FileNotFoundError as exc:
@@ -318,8 +320,6 @@ def farm_turbine_query(
             extra={
                 "loki_farm": farm,
                 "loki_turbine": turbine,
-                "loki_data_type": data_type,
-                "loki_ip": ip,
             },
         )
         return {
