@@ -1,3 +1,3 @@
 APP_NAME = "wind_data_tests"
 LOKI_INSTANCE_ID = "1380423"
-TOKEN = "glc_eyJvIjoiMTU3NTg3MCIsIm4iOiJzdGFjay0xNDIyNjI5LWludGVncmF0aW9uLXRlc3R0b2tlbiIsImsiOiIxUVJKQzROdExFMmMwOTlxQjg3a3hHMjciLCJtIjp7InIiOiJwcm9kLWV1LW5vcnRoLTAifX"
+TOKEN = ""
