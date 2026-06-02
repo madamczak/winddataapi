@@ -71,6 +71,35 @@ DATA_DIR=data_by_turbine_example ENVIRONMENT=local python main.py
 > distinguishable from production logs — filter by `app="winddataAPI.local"`
 > for local runs and `app="winddataAPI"` for production.
 
+### Optional — send logs & metrics to Grafana Cloud
+
+If you also want local runs to appear in Grafana, add the credentials before
+starting the server.  The `ENVIRONMENT=local` value ensures they land in a
+separate stream from production.
+
+**Windows (PowerShell):**
+```powershell
+$env:DATA_DIR                  = "data_by_turbine_example"
+$env:ENVIRONMENT               = "local"
+$env:GRAFANA_LOKI_INSTANCE_ID  = "1380423"
+$env:GRAFANA_METRICS_INSTANCE_ID = "1422629"
+$env:GRAFANA_TOKEN             = "glc_eyJ..."   # your Access Policy token
+python main.py
+```
+
+**macOS / Linux:**
+```bash
+DATA_DIR=data_by_turbine_example \
+ENVIRONMENT=local \
+GRAFANA_LOKI_INSTANCE_ID=1380423 \
+GRAFANA_METRICS_INSTANCE_ID=1422629 \
+GRAFANA_TOKEN=glc_eyJ... \
+python main.py
+```
+
+Omit the Grafana vars entirely if you don't need telemetry — the API runs fine without them.  
+See `docs/grafana_setup.md` for where to find your instance IDs and how to create a token.
+
 The API starts on **http://localhost:8000**.  
 Interactive docs: **http://localhost:8000/docs**
 
