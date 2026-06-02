@@ -56,13 +56,20 @@ Point the API at the example directory via the `DATA_DIR` environment variable:
 **Windows (PowerShell):**
 ```powershell
 $env:DATA_DIR = "data_by_turbine_example"
+$env:ENVIRONMENT = "local"
 python main.py
 ```
 
 **macOS / Linux:**
 ```bash
-DATA_DIR=data_by_turbine_example python main.py
+DATA_DIR=data_by_turbine_example ENVIRONMENT=local python main.py
 ```
+
+> **Grafana note:** when `ENVIRONMENT` is anything other than `production` the
+> logger name becomes `winddataAPI.local` (instead of `winddataAPI`).  
+> This means Loki streams and Grafana dashboard series are immediately
+> distinguishable from production logs — filter by `app="winddataAPI.local"`
+> for local runs and `app="winddataAPI"` for production.
 
 The API starts on **http://localhost:8000**.  
 Interactive docs: **http://localhost:8000/docs**
