@@ -1,0 +1,841 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_LOKI",
+      "label": "Loki",
+      "description": "Loki log data source receiving windcrawler structured JSON logs",
+      "type": "datasource",
+      "pluginId": "loki",
+      "pluginName": "Loki"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    { "type": "grafana", "id": "grafana", "name": "Grafana", "version": "10.0.0" },
+    { "type": "datasource", "id": "loki", "name": "Loki", "version": "1.0.0" },
+    { "type": "panel", "id": "stat",           "name": "Stat",           "version": "" },
+    { "type": "panel", "id": "state-timeline", "name": "State timeline", "version": "" },
+    { "type": "panel", "id": "timeseries",     "name": "Time series",    "version": "" },
+    { "type": "panel", "id": "bargauge",       "name": "Bar gauge",      "version": "" },
+    { "type": "panel", "id": "table",          "name": "Table",          "version": "" },
+    { "type": "panel", "id": "logs",           "name": "Logs",           "version": "" }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      },
+      {
+        "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+        "enable": true,
+        "expr": "{job=\"windcrawler\"} | json | event = `code_updated`",
+        "hide": false,
+        "iconColor": "#5794f2",
+        "name": "Code updates",
+        "titleFormat": "{{machine}} updated to {{sha}}"
+      }
+    ]
+  },
+  "description": "Crawler Fleet Monitor — §14.5 layout. Tracks windcrawler heartbeats, machine uptime, API error rates, row throughput, drift alerts and git versions across all Pi nodes.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "tags": ["windcrawler", "crawler", "degradation", "monitoring"],
+  "time": { "from": "now-24h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Crawler Fleet Monitor",
+  "uid": "crawler-fleet-monitor-v1",
+  "version": 1,
+
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "hide": 0,
+        "includeAll": false,
+        "label": "Loki data source",
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "loki",
+        "refresh": 1,
+        "type": "datasource"
+      },
+      {
+        "current": {},
+        "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+        "definition": "label_values({job=\"windcrawler\"}, machine)",
+        "hide": 0,
+        "includeAll": true,
+        "allValue": ".*",
+        "label": "Machine",
+        "multi": true,
+        "name": "machine",
+        "query": {
+          "label": "machine",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{job=\"windcrawler\"}",
+          "type": 1
+        },
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {},
+        "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+        "definition": "label_values({job=\"windcrawler\"}, machine)",
+        "hide": 0,
+        "includeAll": false,
+        "label": "Farm",
+        "multi": false,
+        "name": "farm",
+        "query": {
+          "label": "farm",
+          "refId": "LokiVariableQueryEditor-VariableQuery",
+          "stream": "{job=\"windcrawler\"}",
+          "type": 1
+        },
+        "refresh": 2,
+        "type": "query"
+      }
+    ]
+  },
+
+  "panels": [
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "title": "🖥  Fleet Health Summary",
+      "type": "row"
+    },
+
+    {
+      "id": 1,
+      "title": "Active Machines",
+      "description": "Number of distinct machines that emitted a heartbeat_start in the last 90 minutes.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "reduceOptions": { "calcs": ["count"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",   "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          },
+          "unit": "short",
+          "displayName": "Active Machines"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "count by (machine) (\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `heartbeat_start`\n    [90m]\n  )\n)",
+          "legendFormat": "{{machine}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "reduce",
+          "options": { "reducers": ["count"] }
+        }
+      ]
+    },
+
+    {
+      "id": 2,
+      "title": "Fleet Uptime — 7 days",
+      "description": "Percentage of heartbeat_end events that completed with zero errors in the last 7 days.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "orange", "value": 85 },
+              { "color": "green",  "value": 95 }
+            ]
+          },
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "displayName": "Fleet Uptime"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "sum(\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `heartbeat_end`\n    | errors = `0`\n    [7d]\n  )\n)\n/\nsum(\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `heartbeat_end`\n    [7d]\n  )\n) * 100",
+          "legendFormat": "Uptime %",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 3,
+      "title": "Avg Run Duration",
+      "description": "Average duration_s of heartbeat_end events across all machines in the selected time range.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "reduceOptions": { "calcs": ["mean"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "unit": "s",
+          "displayName": "Avg Run Duration"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "avg_over_time(\n  {job=\"windcrawler\", machine=~\"$machine\"}\n  | json\n  | event = `heartbeat_end`\n  | unwrap duration_s\n  [$__range]\n)",
+          "legendFormat": "{{machine}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 4,
+      "title": "Last Heartbeat (any node)",
+      "description": "Time elapsed since the most recent heartbeat_start log line from any machine.",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "__time__", "values": false },
+        "orientation": "auto",
+        "textMode": "name",
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "orange", "value": 3600 },
+              { "color": "red",    "value": 7200 }
+            ]
+          },
+          "unit": "dateTimeFromNow",
+          "displayName": "Last heartbeat"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "{job=\"windcrawler\", machine=~\"$machine\"}\n| json\n| event = `heartbeat_start`",
+          "legendFormat": "{{machine}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "labels" }
+        },
+        {
+          "id": "reduce",
+          "options": { "reducers": ["last"] }
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "title": "Machine Activity Timeline — past 24 hours",
+      "type": "row"
+    },
+
+    {
+      "id": 5,
+      "title": "Machine Activity Timeline",
+      "description": "Per-machine activity state over the selected window. Running = heartbeat seen; Warning = turbine_failed in interval; Offline = no heartbeat.",
+      "type": "state-timeline",
+      "gridPos": { "h": 7, "w": 24, "x": 0, "y": 6 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "mergeValues": true,
+        "showValue": "never",
+        "alignValue": "center",
+        "rowHeight": 0.8,
+        "legend": { "displayMode": "list", "placement": "bottom" },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "fillOpacity": 80,
+            "lineWidth": 0,
+            "spanNulls": false
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "#35373d", "value": null },
+              { "color": "#73bf69", "value": 1 },
+              { "color": "#f5a623", "value": 2 },
+              { "color": "#5794f2", "value": 3 }
+            ]
+          },
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "Offline",  "color": "#35373d" } } },
+            { "type": "value", "options": { "1": { "text": "Running",  "color": "#73bf69" } } },
+            { "type": "value", "options": { "2": { "text": "Warning",  "color": "#f5a623" } } },
+            { "type": "value", "options": { "3": { "text": "Updating", "color": "#5794f2" } } }
+          ]
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "sum by (machine) (\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `heartbeat_start`\n    [$__interval]\n  )\n) > 0",
+          "legendFormat": "{{machine}} — Running",
+          "queryType": "range",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "sum by (machine) (\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `turbine_failed`\n    [$__interval]\n  )\n) * 2",
+          "legendFormat": "{{machine}} — Warning",
+          "queryType": "range",
+          "refId": "B"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "sum by (machine) (\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `code_updated`\n    [$__interval]\n  )\n) * 3",
+          "legendFormat": "{{machine}} — Updating",
+          "queryType": "range",
+          "refId": "C"
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "id": 102,
+      "title": "Performance",
+      "type": "row"
+    },
+
+    {
+      "id": 6,
+      "title": "API Error Rate % — by machine",
+      "description": "Error rate = turbine_failed / (turbine_done + turbine_failed) per machine over time.",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 14 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": ["mean", "max"] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "drawStyle": "line",
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "spanNulls": true,
+            "showPoints": "auto",
+            "pointSize": 5
+          },
+          "unit": "percent",
+          "min": 0,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "orange", "value": 5 },
+              { "color": "red",    "value": 15 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "sum by (machine) (\n  count_over_time(\n    {job=\"windcrawler\", machine=~\"$machine\"}\n    | json\n    | event = `turbine_failed`\n    [$__interval]\n  )\n)\n/\n(\n  sum by (machine) (\n    count_over_time(\n      {job=\"windcrawler\", machine=~\"$machine\"}\n      | json\n      | event =~ `turbine_done|turbine_failed`\n      [$__interval]\n    )\n  ) > 0\n) * 100",
+          "legendFormat": "{{machine}}",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 7,
+      "title": "Rows Fetched — last run per node",
+      "description": "rows_total from the most recent heartbeat_end per machine.",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 14 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "displayMode": "gradient",
+        "valueMode": "color",
+        "showUnfilled": true,
+        "minVizWidth": 10,
+        "minVizHeight": 10,
+        "legend": { "displayMode": "list", "placement": "bottom" }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red",    "value": null },
+              { "color": "orange", "value": 1000 },
+              { "color": "green",  "value": 3000 }
+            ]
+          },
+          "unit": "short",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "last_over_time(\n  {job=\"windcrawler\", machine=~\"$machine\"}\n  | json\n  | event = `heartbeat_end`\n  | unwrap rows_total\n  [$__range]\n)",
+          "legendFormat": "{{machine}}",
+          "queryType": "instant",
+          "refId": "A"
+        }
+      ]
+    },
+
+    {
+      "id": 8,
+      "title": "Drift Alerts — today",
+      "description": "Count of drift_alert events since midnight UTC.",
+      "type": "stat",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 14 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green",  "value": null },
+              { "color": "orange", "value": 1 },
+              { "color": "red",    "value": 5 }
+            ]
+          },
+          "unit": "short",
+          "displayName": "Drift Alerts"
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "count_over_time(\n  {job=\"windcrawler\", machine=~\"$machine\"}\n  | json\n  | event = `drift_alert`\n  [1d]\n)",
+          "legendFormat": "Drift Alerts",
+          "queryType": "instant",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "count_over_time(\n  {job=\"windcrawler\", machine=~\"$machine\"}\n  | json\n  | event = `drift_alert`\n  | severity = `WARNING`\n  [1d]\n)",
+          "legendFormat": "WARNING",
+          "queryType": "instant",
+          "refId": "B",
+          "hide": false
+        },
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "count_over_time(\n  {job=\"windcrawler\", machine=~\"$machine\"}\n  | json\n  | event = `drift_alert`\n  | severity = `CRITICAL`\n  [1d]\n)",
+          "legendFormat": "CRITICAL",
+          "queryType": "instant",
+          "refId": "C",
+          "hide": false
+        }
+      ]
+    },
+
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "id": 103,
+      "title": "Operational Detail",
+      "type": "row"
+    },
+
+    {
+      "id": 9,
+      "title": "Git Version per Machine",
+      "description": "Most recent commit SHA and approximate deploy time per node. Orange = stale (last heartbeat > 6 h ago).",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "footer": { "show": false },
+        "showHeader": true,
+        "frameIndex": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "sha" },
+            "properties": [
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "#3ecf8e", "value": null }
+                  ]
+                }
+              },
+              { "id": "custom.displayMode", "value": "color-text" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Time" },
+            "properties": [
+              { "id": "displayName", "value": "Last seen" },
+              { "id": "unit", "value": "dateTimeFromNow" }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "{job=\"windcrawler\", machine=~\"$machine\"}\n| json\n| event = `heartbeat_start`\n| line_format `{{.machine}}\t{{.sha}}\t{{.turbine_count}}\t{{.farm}}`",
+          "legendFormat": "",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": {
+            "source": "labels",
+            "replace": false
+          }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "machine": { "aggregations": ["last"], "operation": "groupby" },
+              "sha":     { "aggregations": ["last"], "operation": "aggregate" },
+              "Time":    { "aggregations": ["last"], "operation": "aggregate" }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "machine":  "Machine",
+              "sha (last)": "Commit SHA",
+              "Time (last)": "Last seen"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": { "fields": [{ "displayName": "Machine", "desc": false }] }
+        }
+      ]
+    },
+
+    {
+      "id": 10,
+      "title": "Data Freshness — newest crawled date per turbine",
+      "description": "Latest date from accumulate_done or turbine_done events. Shows how far the crawl has progressed vs. the expected data_end date.",
+      "type": "table",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+      "options": {
+        "footer": { "show": false },
+        "showHeader": true
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" }
+          }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Lag" },
+            "properties": [
+              { "id": "unit", "value": "dateTimeFromNow" },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green",  "value": null },
+                    { "color": "orange", "value": 86400 },
+                    { "color": "red",    "value": 604800 }
+                  ]
+                }
+              },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } }
+            ]
+          }
+        ]
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "editorMode": "code",
+          "expr": "{job=\"windcrawler\", machine=~\"$machine\"}\n| json\n| event = `turbine_done`",
+          "legendFormat": "",
+          "queryType": "range",
+          "refId": "A"
+        }
+      ],
+      "transformations": [
+        {
+          "id": "extractFields",
+          "options": { "source": "labels", "replace": false }
+        },
+        {
+          "id": "groupBy",
+          "options": {
+            "fields": {
+              "farm":    { "aggregations": ["last"], "operation": "groupby" },
+              "turbine": { "aggregations": ["last"], "operation": "groupby" },
+              "Time":    { "aggregations": ["last"], "operation": "aggregate" }
+            }
+          }
+        },
+        {
+          "id": "organize",
+          "options": {
+            "renameByName": {
+              "farm":        "Farm",
+              "turbine":     "Turbine",
+              "Time (last)": "Newest crawled"
+            }
+          }
+        },
+        {
+          "id": "sortBy",
+          "options": {
+            "fields": [
+              { "displayName": "Farm",    "desc": false },
+              { "displayName": "Turbine", "desc": false }
+            ]
+          }
+        }
+      ]
+    },
+
+    {
+      "collapsed": true,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "id": 104,
+      "title": "Recent Errors & Alerts (raw log lines)",
+      "type": "row",
+      "panels": [
+        {
+          "id": 11,
+          "title": "ERROR / WARN log lines",
+          "description": "Raw turbine_failed, api_retry and drift_alert log entries — most recent first.",
+          "type": "logs",
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 32 },
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "options": {
+            "dedupStrategy": "none",
+            "enableLogDetails": true,
+            "prettifyLogMessage": true,
+            "showLabels": false,
+            "showTime": true,
+            "sortOrder": "Descending",
+            "wrapLogMessage": true
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+              "editorMode": "code",
+              "expr": "{job=\"windcrawler\", machine=~\"$machine\", level=~\"WARN|ERROR\"}\n| json\n| event =~ `turbine_failed|drift_alert|api_retry|accumulate_fetch_retry`",
+              "legendFormat": "",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ]
+        },
+        {
+          "id": 12,
+          "title": "Drift Alert Detail",
+          "description": "All drift_alert events with turbine, col, severity and mean_delta_C fields.",
+          "type": "table",
+          "gridPos": { "h": 10, "w": 24, "x": 0, "y": 42 },
+          "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+          "options": {
+            "footer": { "show": false },
+            "showHeader": true
+          },
+          "fieldConfig": {
+            "defaults": {
+              "custom": { "align": "auto" }
+            },
+            "overrides": [
+              {
+                "matcher": { "id": "byName", "options": "severity" },
+                "properties": [
+                  {
+                    "id": "mappings",
+                    "value": [
+                      { "type": "value", "options": { "WATCH":    { "text": "WATCH",    "color": "yellow" } } },
+                      { "type": "value", "options": { "WARNING":  { "text": "WARNING",  "color": "orange" } } },
+                      { "type": "value", "options": { "CRITICAL": { "text": "CRITICAL", "color": "red"    } } }
+                    ]
+                  },
+                  { "id": "custom.cellOptions", "value": { "type": "color-background" } }
+                ]
+              }
+            ]
+          },
+          "targets": [
+            {
+              "datasource": { "type": "loki", "uid": "${DS_LOKI}" },
+              "editorMode": "code",
+              "expr": "{job=\"windcrawler\", machine=~\"$machine\"}\n| json\n| event = `drift_alert`\n| line_format `{{.farm}}|{{.turbine}}|{{.col}}|{{.severity}}|{{.mean_delta_C}}`",
+              "legendFormat": "",
+              "queryType": "range",
+              "refId": "A"
+            }
+          ],
+          "transformations": [
+            {
+              "id": "extractFields",
+              "options": { "source": "labels", "replace": false }
+            },
+            {
+              "id": "organize",
+              "options": {
+                "renameByName": {
+                  "farm": "Farm", "turbine": "Turbine",
+                  "col": "Sensor", "severity": "Severity",
+                  "mean_delta_C": "Mean ΔT (°C)", "Time": "Time"
+                },
+                "excludeByName": {
+                  "id": true, "tsNs": true, "labels": true
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+
+  ]
+}
+

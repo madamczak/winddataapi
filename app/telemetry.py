@@ -34,6 +34,10 @@ _OTLP_ENDPOINT       = os.environ.get("GRAFANA_OTLP_ENDPOINT",
                            "https://otlp-gateway-prod-eu-north-0.grafana.net/otlp")
 _ENV                 = os.environ.get("ENVIRONMENT", "production")
 
+# When not running in production the app/logger name gets a ".local" postfix so
+# Loki streams and Grafana dashboards are trivially distinguishable from prod.
+_APP_NAME = "winddataAPI" if _ENV == "production" else "winddataAPI.local"
+
 _loki_creds    = base64.b64encode(f"{_LOKI_INSTANCE_ID}:{_TOKEN}".encode()).decode()
 _metrics_creds = base64.b64encode(f"{_METRICS_INSTANCE_ID}:{_TOKEN}".encode()).decode()
 
@@ -65,7 +69,7 @@ class _LokiHandler(logging.Handler):
             payload = {
                 "streams": [{
                     "stream": {
-                        "app":   "winddataAPI",
+                        "app":   _APP_NAME,
                         "level": record.levelname.lower(),
                         "env":   _ENV,
                         **extra_labels,
@@ -93,7 +97,14 @@ class _LokiHandler(logging.Handler):
 
 # ── Public logger factory ─────────────────────────────────────────────────────
 def get_logger(name: str = "winddataAPI") -> logging.Logger:
-    """Return a logger that writes to stdout and (if configured) to Loki."""
+    """Return a logger that writes to stdout and (if configured) to Loki.
+
+    When ENVIRONMENT != 'production' the logger name gets a '.local' postfix
+    so local runs are distinguishable from production in Grafana.
+    """
+    # Rewrite the base name if this is a local run
+    if _ENV != "production":
+        name = name.replace("winddataAPI", _APP_NAME, 1)
     logger = logging.getLogger(name)
     if logger.handlers:
         return logger
@@ -118,7 +129,7 @@ def get_logger(name: str = "winddataAPI") -> logging.Logger:
 
 # ── OTLP metrics setup ────────────────────────────────────────────────────────
 _resource = Resource.create({
-    "service.name":           "winddataAPI",
+    "service.name":           _APP_NAME,
     "service.version":        "1.0.0",
     "deployment.environment": _ENV,
 })
@@ -137,7 +148,7 @@ else:
     _provider = MeterProvider(resource=_resource)
 
 metrics.set_meter_provider(_provider)
-_meter = metrics.get_meter("winddataAPI.api")
+_meter = metrics.get_meter(_APP_NAME)
 
 # ── Instruments ───────────────────────────────────────────────────────────────
 request_counter = _meter.create_counter(
