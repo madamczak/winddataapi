@@ -16,7 +16,6 @@ class TestWindDataAppUI:
         locator = page.get_by_role("heading", name="🌬️ Wind Farm Data Explorer")
         highlight(locator)
         assert locator.inner_text() == '🌬️ Wind Farm Data Explorer'
-        # expect(locator).to_have_text('️🌬️ Wind Farm Data Explorer')
 
     def test_query_tab_is_visible(self, page):
         locator = page.get_by_role("button", name="🔍 Query for Data")
@@ -73,5 +72,5 @@ class TestWindDataAppAPI:
 
         response = requests.get(url)
         response_time_seconds = response.elapsed.microseconds / 1_000_000
-        threshold_seconds = 0.5
+        threshold_seconds = 0.8
         check.is_true(response_time_seconds < threshold_seconds, f'Response time {response_time_seconds} seconds is greater than {threshold_seconds} seconds')

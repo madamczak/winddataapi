@@ -1,5 +1,4 @@
 from __future__ import annotations
-
 import atexit
 import base64
 import getpass
@@ -12,40 +11,29 @@ import threading
 import time
 import uuid
 from datetime import datetime
-
 import pytest
 import requests
 from playwright.sync_api import sync_playwright
 from pytest_check import check
 from pytest_metadata.plugin import metadata_key
+from tests.wind_data_tests.config import LOKI_INSTANCE_ID, TOKEN, APP_NAME
 
-# Grafana Loki configuration
-# Credentials - set these environment variables
-LOKI_INSTANCE_ID = os.environ.get("GRAFANA_LOKI_INSTANCE_ID", "1380423")
-TOKEN = os.environ.get("GRAFANA_TOKEN",
-                       "glc_eyJvIjoiMTU3NTg3MCIsIm4iOiJzdGFjay0xNDIyNjI5LWludGVncmF0aW9uLXRlc3R0b2tlbiIsImsiOiIxUVJKQzROdExFMmMwOTlxQjg3a3hHMjciLCJtIjp7InIiOiJwcm9kLWV1LW5vcnRoLTAifX0=")
 
-# Push endpoints — copy from your Grafana Cloud stack details page
 LOKI_URL = os.environ.get("GRAFANA_LOKI_URL",
                           "https://logs-prod-025.grafana.net/loki/api/v1/push")
 ENV = os.environ.get("ENVIRONMENT", "test")
-
-APP_NAME = "wind_data_tests"
 
 LOKI_ENABLED = bool(LOKI_INSTANCE_ID and TOKEN)
 
 SESSION_ID = str(uuid.uuid4().hex[:8])
 START_TIME = time.time()
 
-# Basic auth header for Grafana Cloud
-_loki_b64 = base64.b64encode(f"{LOKI_INSTANCE_ID}:{TOKEN}".encode()).decode()
 
-# ── Loki log handler (queue-based, reliable delivery) ─────────────────────────
+_loki_b64 = base64.b64encode(f"{LOKI_INSTANCE_ID}:{TOKEN}".encode()).decode()
 _log_queue: queue.Queue = queue.Queue()
 
 
 def _loki_worker():
-    """Background thread: drain the queue and push batches to Loki."""
     headers = {
         "Authorization": f"Basic {_loki_b64}",
         "Content-Type": "application/json",
@@ -70,7 +58,6 @@ _worker_thread.start()
 
 
 def _flush_loki():
-    """Block until every queued log has been pushed to Loki."""
     _log_queue.join()
 
 
@@ -78,8 +65,6 @@ atexit.register(_flush_loki)
 
 
 class _LokiHandler(logging.Handler):
-    """Enqueues log records; the background worker pushes them to Loki."""
-
     def emit(self, record: logging.LogRecord):
         if not LOKI_ENABLED:
             return
@@ -99,7 +84,6 @@ class _LokiHandler(logging.Handler):
             print(f"Loki emit error: {e}")
 
 
-# Add Grafana handler to root logger
 grafana_handler = _LokiHandler()
 grafana_handler.setFormatter(logging.Formatter("%(message)s"))
 logging.root.addHandler(grafana_handler)
@@ -122,8 +106,6 @@ logging.root.addHandler(grafana_handler)
 
 
 def pytest_runtest_logreport(report):
-    """Log test results (pass/fail/skip) to Grafana."""
-
     parts = [report.nodeid]
     status = report.outcome
 
@@ -147,9 +129,10 @@ def pytest_configure(config):
     config.stash[metadata_key]['Designer'] = 'Tester'
     config.stash[metadata_key]['Test type'] = 'Automated'
     config.stash[metadata_key]['Tester'] = getpass.getuser()
-    config.stash[metadata_key]['Environment'] = 'DEV'
+    config.stash[metadata_key]['Environment'] = ENV
     config.stash[metadata_key]['URL'] = config.getoption("--url")
-    config.stash[metadata_key]['SESION_ID'] = SESSION_ID
+    config.stash[metadata_key]['SESIONID'] = SESSION_ID
+    config.stash[metadata_key]['APP NAME'] = APP_NAME
 
 
 @pytest.fixture(scope="module")
@@ -284,8 +267,6 @@ def highlight(locator, thickness=3, style='solid', color='orange'):
 
 
 def pytest_sessionfinish(session, exitstatus):
-    """Log the overall test session results."""
-
     duration = time.time() - START_TIME
 
     terminal_reporter = session.config.pluginmanager.get_plugin("terminalreporter")
