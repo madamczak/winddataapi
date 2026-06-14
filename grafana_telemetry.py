@@ -43,8 +43,8 @@ _exporter = OTLPMetricExporter(
     headers=OTLP_HEADERS,
 )
 
-# Export every 10 s (short for dev); bump to 60 s in production
-_reader = PeriodicExportingMetricReader(_exporter, export_interval_millis=10_000)
+# Export every 10 minutes
+_reader = PeriodicExportingMetricReader(_exporter, export_interval_millis=600_000)
 
 _resource = Resource.create({
     "service.name":    "winddataAPI",

@@ -140,7 +140,7 @@ if _METRICS_ENABLED:
         headers={"Authorization": f"Basic {_metrics_creds}"},
     )
     _reader = PeriodicExportingMetricReader(
-        _exporter, export_interval_millis=30_000
+        _exporter, export_interval_millis=600_000  # 10 minutes
     )
     _provider = MeterProvider(resource=_resource, metric_readers=[_reader])
 else:
