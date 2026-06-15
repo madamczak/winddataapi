@@ -9,6 +9,10 @@ import time
 import requests
 import pytest
 
+from env_loader import load_repo_env
+
+load_repo_env()
+
 # Allow importing grafana_telemetry from the project root
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..'))
 from grafana_telemetry import (
@@ -291,5 +295,4 @@ class TestFailingExamples:
         loki_push(f"is_valid_wind({wind_speed}) = {valid}", test_name=name,
                   level="error")
         assert valid, f"Wind speed {wind_speed} m/s is physically impossible"
-
 

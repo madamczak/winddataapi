@@ -13,13 +13,16 @@ Auth: Basic  <instance_id>:<token>
 
 import base64
 import time
+import os
 from opentelemetry import metrics
 from opentelemetry.sdk.metrics import MeterProvider
 from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
 from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
 from opentelemetry.sdk.resources import Resource
 
-import os
+from env_loader import load_repo_env
+
+load_repo_env()
 
 # ── Grafana Cloud credentials ─────────────────────────────────────────────────
 # Set these as environment variables (never hard-code tokens in source):
@@ -146,4 +149,3 @@ class timer:
         attrs = {"test": self.test_name, **self.extra_attrs}
         test_duration_histogram.record(self.elapsed_seconds, attrs)
         return False   # don't suppress exceptions
-
