@@ -1,0 +1,196 @@
+{
+  "title": "Worker Tests",
+  "uid": "worker-tests-simple",
+  "description": "Pass / fail counts from wind_events_crawler test runs.",
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-24h", "to": "now" },
+  "editable": true,
+  "id": null,
+  "tags": ["pytest", "wind_events_crawler"],
+  "annotations": { "list": [] },
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+      "description": "Total tests that finished with outcome=passed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "displayName": "Passed",
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }] }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+          "expr": "sum(count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\", outcome=\"passed\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "legendFormat": "Passed",
+          "refId": "A"
+        }
+      ],
+      "title": "✅ Passed",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+      "description": "Total tests that finished with outcome=failed.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "fixed", "fixedColor": "red" },
+          "displayName": "Failed",
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green" }, { "color": "red", "value": 1 }]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+          "expr": "sum(count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\", outcome=\"failed\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "legendFormat": "Failed",
+          "refId": "A"
+        }
+      ],
+      "title": "❌ Failed",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+      "description": "Pass rate percentage.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "displayName": "Pass Rate",
+          "unit": "percent",
+          "min": 0,
+          "max": 100,
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red" },
+              { "color": "orange", "value": 80 },
+              { "color": "green", "value": 95 }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 5, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+          "expr": "100 * sum(count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\", outcome=\"passed\" [$__range])) / sum(count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "legendFormat": "Pass Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Pass Rate %",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+      "description": "Each test name with its pass and fail counts side by side.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "lineWidth": 1,
+            "axisBorderShow": false
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "Passed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "Failed" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      },
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 5 },
+      "id": 4,
+      "options": {
+        "barRadius": 0.03,
+        "barWidth": 0.6,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right" },
+        "orientation": "horizontal",
+        "stacking": "none",
+        "tooltip": { "mode": "multi", "sort": "desc" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 150
+      },
+      "targets": [
+        {
+          "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+          "expr": "sum by (test_name) (count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\", outcome=\"passed\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "legendFormat": "Passed",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "loki", "uid": "grafanacloud-logs" },
+          "expr": "sum by (test_name) (count_over_time({app=\"wind_events_crawler_tests\", source=\"worker_tests\"} | json | event=\"worker_test_finished\", outcome=\"failed\" [$__range]))",
+          "instant": true,
+          "queryType": "instant",
+          "legendFormat": "Failed",
+          "refId": "B"
+        }
+      ],
+      "title": "Pass / Fail by Test Name",
+      "type": "barchart"
+    }
+  ],
+  "templating": { "list": [] },
+  "timepicker": {},
+  "timezone": "browser"
+}
