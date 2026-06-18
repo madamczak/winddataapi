@@ -119,6 +119,7 @@ def setup(c):
         local_env = f"runners/wind_events_crawler/.env.{pi_id}"
         if os.path.exists(local_env):
             conn.put(local_env, ENV_DEST)
+            conn.run(f"sed -i 's/\\r//' {ENV_DEST}")   # strip Windows CRLF
             print(f"  .env pushed from {local_env}")
         else:
             print(f"  WARNING: {local_env} not found — skipping .env upload")
@@ -150,6 +151,7 @@ def push_envs(c):
             continue
         conn = Connection(host)
         conn.put(local_env, ENV_DEST)
+        conn.run(f"sed -i 's/\\r//' {ENV_DEST}")   # strip Windows CRLF
         print(f"  {pi_id} ({host}): pushed {local_env} → {ENV_DEST}")
 
 

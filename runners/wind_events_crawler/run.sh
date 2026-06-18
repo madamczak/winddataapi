@@ -14,6 +14,8 @@ fi
 
 if command -v uv >/dev/null 2>&1; then
     UV_BIN="uv"
+elif [ -x "$HOME/.local/bin/uv" ]; then
+    UV_BIN="$HOME/.local/bin/uv"
 elif command -v python3 >/dev/null 2>&1; then
     UV_BIN="python3 -m uv"
 else
