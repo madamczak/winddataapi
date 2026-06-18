@@ -3,6 +3,9 @@ data_by_turbine/
 
 # Crawler collected output data (thousands of JSON files)
 crawler/output/
+# ...except the shared wind_events_crawler result artifact
+!crawler/output/wind_events_crawler/
+!crawler/output/wind_events_crawler/wind_events_crawler.json
 
 # Python
 __pycache__/
