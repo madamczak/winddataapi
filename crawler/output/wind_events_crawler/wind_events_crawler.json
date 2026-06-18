@@ -1,10 +1,18 @@
 {
   "schema_version": "0.1.0",
-  "generated_at_utc": null,
+  "generated_at_utc": "2026-06-18T19:15:47Z",
   "producer": {
     "worker": "wind_events_crawler",
-    "pi_id": "unassigned",
-    "revision": null
+    "pi_id": "pi1",
+    "revision": "dc0e63c454c74b34b6804fd95e4e837d4f43451b"
   },
-  "findings": []
+  "findings": [
+    {
+      "scenario": "data_presence",
+      "farm": "kelmarsh",
+      "turbine": "turbine_1",
+      "evaluated_window_start_utc": "2020-05-29T20:00:00Z",
+      "evaluated_window_end_utc": "2020-05-30T22:00:00Z"
+    }
+  ]
 }
