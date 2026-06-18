@@ -23,7 +23,7 @@ Requirements:
 from __future__ import annotations
 
 import os
-from fabric import Connection, GroupException, SerialGroup
+from fabric import Connection, SerialGroup, task
 
 # ── Fleet definition ──────────────────────────────────────────────────────────
 
@@ -71,7 +71,8 @@ def _header(title: str) -> None:
 
 # ── Tasks ─────────────────────────────────────────────────────────────────────
 
-def setup():
+@task
+def setup(c):
     """
     Full first-time setup on all Pis:
       1. Ensure ~/Programming working directory exists
@@ -85,47 +86,48 @@ def setup():
     _header("SETUP — all Pis")
     for pi_id, host in PIES.items():
         print(f"\n>>> {pi_id}  ({host})")
-        c = Connection(host)
+        conn = Connection(host)
 
         # 1. Ensure working directory exists
-        c.run(f"mkdir -p {WORK_DIR}")
+        conn.run(f"mkdir -p {WORK_DIR}")
 
         # 2. Clone repo if missing, otherwise pull latest
-        c.run(
+        conn.run(
             f"if [ -d {REPO}/.git ]; then "
             f"  echo 'repo exists — pulling latest' && cd {REPO} && git pull; "
             f"else "
-            f"  echo 'cloning repo' && git clone https://github.com/adamczakmateusz/winddataAPI.git {REPO}; "
+            f"  echo 'cloning repo' && git clone https://github.com/madamczak/winddataapi.git {REPO}; "
             f"fi"
         )
 
         # 3. Install uv if missing
-        c.run(
+        conn.run(
             "command -v uv >/dev/null 2>&1 && echo 'uv ok' || "
             "curl -LsSf https://astral.sh/uv/install.sh | sh"
         )
 
         # 4. Sync worker dependencies
-        c.run(f"cd {REPO} && $HOME/.local/bin/uv sync --directory crawler/wind_events_crawler")
+        conn.run(f"cd {REPO} && $HOME/.local/bin/uv sync --directory crawler/wind_events_crawler")
 
         # 5. Create output directory
-        c.run(f"mkdir -p {OUTPUT_DIR}")
+        conn.run(f"mkdir -p {OUTPUT_DIR}")
 
         # 6. Push .env
         local_env = f"runners/wind_events_crawler/.env.{pi_id}"
         if os.path.exists(local_env):
-            c.put(local_env, ENV_DEST)
+            conn.put(local_env, ENV_DEST)
             print(f"  .env pushed from {local_env}")
         else:
             print(f"  WARNING: {local_env} not found — skipping .env upload")
 
         # 7. Cron
-        _install_cron(c, pi_id)
+        _install_cron(conn, pi_id)
 
     _header("SETUP COMPLETE")
 
 
-def deploy():
+@task
+def deploy(c):
     """Pull latest code and sync uv deps on all Pis."""
     _header("DEPLOY — git pull + uv sync")
     _run_all(
@@ -134,7 +136,8 @@ def deploy():
     )
 
 
-def push_envs():
+@task
+def push_envs(c):
     """Upload each Pi's .env file to the correct Pi."""
     _header("PUSH ENV FILES")
     for pi_id, host in PIES.items():
@@ -142,12 +145,13 @@ def push_envs():
         if not os.path.exists(local_env):
             print(f"  {pi_id}: SKIP — {local_env} not found")
             continue
-        c = Connection(host)
-        c.put(local_env, ENV_DEST)
+        conn = Connection(host)
+        conn.put(local_env, ENV_DEST)
         print(f"  {pi_id} ({host}): pushed {local_env} → {ENV_DEST}")
 
 
-def setup_cron():
+@task
+def setup_cron(c):
     """
     Install the wind_events_crawler cron job on all Pis.
     Removes any existing entry containing 'wind_events_crawler' first.
@@ -155,21 +159,23 @@ def setup_cron():
     _header("SETUP CRON")
     for pi_id, host in PIES.items():
         print(f"\n>>> {pi_id}  ({host})")
-        c = Connection(host)
-        _install_cron(c, pi_id)
+        conn = Connection(host)
+        _install_cron(conn, pi_id)
 
 
-def remove_cron():
+@task
+def remove_cron(c):
     """Remove the wind_events_crawler cron job from all Pis."""
     _header("REMOVE CRON")
     for pi_id, host in PIES.items():
         print(f"\n>>> {pi_id}  ({host})")
-        c = Connection(host)
-        _remove_cron(c)
+        conn = Connection(host)
+        _remove_cron(conn)
         print(f"  {pi_id}: cron entry removed (if it existed)")
 
 
-def status():
+@task
+def status(c):
     """Show git HEAD and last cron log line on each Pi."""
     _header("STATUS")
     _run_all(
@@ -179,13 +185,15 @@ def status():
     )
 
 
-def logs():
+@task
+def logs(c):
     """Tail last 30 lines of the cron log on each Pi."""
     _header("LOGS")
     _run_all(f"tail -30 {CRON_LOG} 2>/dev/null || echo '(no log yet)'", warn=True)
 
 
-def collect_logs():
+@task
+def collect_logs(c):
     """Download cron logs from all Pis into logs/ on your PC."""
     _header("COLLECT LOGS")
     os.makedirs("logs", exist_ok=True)
@@ -198,7 +206,8 @@ def collect_logs():
             print(f"  {pi_id}: SKIP — {e}")
 
 
-def run_now():
+@task
+def run_now(c):
     """Trigger the wind_events_crawler immediately on all Pis (outside cron)."""
     _header("RUN NOW")
     _run_all(f"bash {RUNNER}", warn=True)
@@ -206,17 +215,16 @@ def run_now():
 
 # ── Internal helpers ──────────────────────────────────────────────────────────
 
-def _remove_cron(c: Connection) -> None:
+def _remove_cron(conn: Connection) -> None:
     """Strip any crontab line containing CRON_TAG."""
-    c.run(
+    conn.run(
         f"(crontab -l 2>/dev/null | grep -v '{CRON_TAG}') | crontab -",
         warn=True
     )
 
 
-def _install_cron(c: Connection, pi_id: str) -> None:
+def _install_cron(conn: Connection, pi_id: str) -> None:
     """Remove existing entry then add the fresh one."""
-    _remove_cron(c)
-    c.run(f'(crontab -l 2>/dev/null; echo "{CRON_LINE}") | crontab -')
+    _remove_cron(conn)
+    conn.run(f'(crontab -l 2>/dev/null; echo "{CRON_LINE}") | crontab -')
     print(f"  {pi_id}: cron installed → {CRON_LINE}")
-
