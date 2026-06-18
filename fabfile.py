@@ -33,7 +33,8 @@ PIES: dict[str, str] = {
     "pi3": "pi@192.168.0.108",
 }
 
-REPO        = "/home/pi/winddataAPI"
+WORK_DIR    = "/home/pi/Programming"
+REPO        = f"{WORK_DIR}/winddataAPI"
 RUNNER_DIR  = f"{REPO}/runners/wind_events_crawler"
 RUNNER      = f"{RUNNER_DIR}/run.sh"
 CRON_LOG    = f"{RUNNER_DIR}/cron.log"
@@ -73,37 +74,44 @@ def _header(title: str) -> None:
 def setup():
     """
     Full first-time setup on all Pis:
-      1. Clone repo (skip if already present)
-      2. Install uv
-      3. Sync wind_events_crawler dependencies
-      4. Create output directory
-      5. Push Pi-specific .env file
-      6. Install cron job
+      1. Ensure ~/Programming working directory exists
+      2. Clone repo (or pull latest if already cloned)
+      3. Install uv
+      4. Sync wind_events_crawler dependencies
+      5. Create output directory
+      6. Push Pi-specific .env file
+      7. Install cron job
     """
     _header("SETUP — all Pis")
     for pi_id, host in PIES.items():
         print(f"\n>>> {pi_id}  ({host})")
         c = Connection(host)
 
-        # 1. Clone repo if missing
+        # 1. Ensure working directory exists
+        c.run(f"mkdir -p {WORK_DIR}")
+
+        # 2. Clone repo if missing, otherwise pull latest
         c.run(
-            f"[ -d {REPO} ] && echo 'repo exists' || "
-            f"git clone https://github.com/adamczakmateusz/winddataAPI.git {REPO}"
+            f"if [ -d {REPO}/.git ]; then "
+            f"  echo 'repo exists — pulling latest' && cd {REPO} && git pull; "
+            f"else "
+            f"  echo 'cloning repo' && git clone https://github.com/adamczakmateusz/winddataAPI.git {REPO}; "
+            f"fi"
         )
 
-        # 2. Install uv if missing
+        # 3. Install uv if missing
         c.run(
             "command -v uv >/dev/null 2>&1 && echo 'uv ok' || "
             "curl -LsSf https://astral.sh/uv/install.sh | sh"
         )
 
-        # 3. Sync worker dependencies
+        # 4. Sync worker dependencies
         c.run(f"cd {REPO} && $HOME/.local/bin/uv sync --directory crawler/wind_events_crawler")
 
-        # 4. Create output directory
+        # 5. Create output directory
         c.run(f"mkdir -p {OUTPUT_DIR}")
 
-        # 5. Push .env
+        # 6. Push .env
         local_env = f"runners/wind_events_crawler/.env.{pi_id}"
         if os.path.exists(local_env):
             c.put(local_env, ENV_DEST)
@@ -111,7 +119,7 @@ def setup():
         else:
             print(f"  WARNING: {local_env} not found — skipping .env upload")
 
-        # 6. Cron
+        # 7. Cron
         _install_cron(c, pi_id)
 
     _header("SETUP COMPLETE")
