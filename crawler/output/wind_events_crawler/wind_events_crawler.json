@@ -1,0 +1,10 @@
+{
+  "schema_version": "0.1.0",
+  "generated_at_utc": null,
+  "producer": {
+    "worker": "wind_events_crawler",
+    "pi_id": "unassigned",
+    "revision": null
+  },
+  "findings": []
+}
