@@ -1,0 +1,2 @@
+# Every 10 minutes, run the packaged worker through the thin Pi wrapper.
+*/10 * * * * cd /home/pi/winddataAPI && /usr/bin/env bash runners/wind_events_crawler/run.sh >> runners/wind_events_crawler/cron.log 2>&1
