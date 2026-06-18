@@ -124,7 +124,10 @@ def setup(c):
         else:
             print(f"  WARNING: {local_env} not found — skipping .env upload")
 
-        # 7. Cron
+        # 7. Switch remote to SSH so the worker can push findings
+        conn.run(f"cd {REPO} && git remote set-url origin git@github.com:madamczak/winddataapi.git")
+
+        # 8. Cron
         _install_cron(conn, pi_id)
 
     _header("SETUP COMPLETE")
