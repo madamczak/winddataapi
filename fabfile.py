@@ -95,6 +95,9 @@ def setup(c):
         conn.run(
             f"if [ -d {REPO}/.git ]; then "
             f"  echo 'repo exists — pulling latest' && cd {REPO} && git pull; "
+            f"elif [ -d {REPO} ]; then "
+            f"  echo 'directory exists but not a git repo — removing and cloning' && "
+            f"  rm -rf {REPO} && git clone https://github.com/madamczak/winddataapi.git {REPO}; "
             f"else "
             f"  echo 'cloning repo' && git clone https://github.com/madamczak/winddataapi.git {REPO}; "
             f"fi"
