@@ -1,9 +1,9 @@
 {
   "schema_version": "0.1.0",
-  "generated_at_utc": "2026-06-19T16:30:19Z",
+  "generated_at_utc": "2026-06-19T16:30:23Z",
   "producer": {
     "worker": "wind_events_crawler",
-    "pi_id": "pi3",
+    "pi_id": "pi1",
     "revision": "d9b8d7a30a86e5f48a77d26d80bfc45e1b48494f"
   },
   "findings": [
